@@ -3,7 +3,7 @@ import ReactPlayer from 'react-player';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faVolumeMute, faVolumeUp, faVolumeDown, faGear } from '@fortawesome/free-solid-svg-icons';
 
-const CustomVideoPlayer = ({ src }) => {
+const CustomVideoPlayer = ({ src, heigh }) => {
     const playerRef = useRef(null);
     const [playing, setPlaying] = useState(false);
     const [played, setPlayed] = useState(0);
@@ -101,11 +101,11 @@ const CustomVideoPlayer = ({ src }) => {
     return (
         <div
             className="relative w-full overflow-hidden border border-slate-900"
-            style={{ height: isFullscreen ? '100vh' : 'h-full' }}
+            style={{ height: isFullscreen ? '100vh' : '610px' }}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
 
-        >   <div onClick={handlePlayerClick} className='w-full h-[100%] '>
+        >   <div onClick={handlePlayerClick} className={`w-full h-[610px] `}>
                 <ReactPlayer
                     ref={playerRef}
                     url={src}

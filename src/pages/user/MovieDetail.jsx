@@ -16,11 +16,11 @@ function MovieDetail() {
     };
 
     return (
-        <div className="w-full border  mt-20" >
+        <div className="w-full border  mt-18" >
             {/* <VideoPlayer src={movieSrc} className="w-full h-full object-cover absolute top-0 left-0" /> */}
             {/* <VideoPlayer src="https://s3.phim1280.tv/20240524/znnHM21Z/index.m3u8" className="w-full h-full object-cover absolute top-0 left-0" /> */}
 
-            <div className="w-full h-[620px] ">
+            <div className="w-full h-[610px] ">
                 <CustomVideoPlayer src="https://s3.phim1280.tv/20240524/znnHM21Z/index.m3u8" />
             </div>
 
