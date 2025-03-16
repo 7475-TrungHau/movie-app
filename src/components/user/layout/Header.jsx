@@ -19,8 +19,8 @@ function Header() {
             setPageCurrent('home');
         } else if (location.pathname === '/movies') {
             setPageCurrent('movies');
-        } else if (location.pathname === '/tv-shows') {
-            setPageCurrent('tv-shows');
+        } else if (location.pathname === '/anime') {
+            setPageCurrent('anime');
         } else if (location.pathname === '/phim-le') {
             setPageCurrent('phim-le');
         } else if (location.pathname === '/phim-bo') {
@@ -65,7 +65,7 @@ function Header() {
                             <Link to="/movies" className={`hover:text-orange-500 ${pageCurrent === 'movies' ? 'font-bold ' : 'opacity-80'}`}>Phim</Link>
                         </li>
                         <li>
-                            <Link to="/tv-shows" className={`hover:text-orange-500 ${pageCurrent === 'tv-shows' ? 'font-bold ' : 'opacity-80'}`}>TV Shows</Link>
+                            <Link to="/anime" className={`hover:text-orange-500 ${pageCurrent === 'anime' ? 'font-bold ' : 'opacity-80'}`}>Anime</Link>
                         </li>
                         <li className={`${pageCurrent === 'phim-le' || pageCurrent === 'phim-bo' ? 'block' : 'hidden'}`}>
                             <Link to={`/${pageCurrent === 'phim-le' ?? 'phim-bo'}`} className="hover:text-orange-500 font-bold">{pageCurrent === 'phim-le' ? 'Phim Lẻ' : 'Phim Bộ'}</Link>

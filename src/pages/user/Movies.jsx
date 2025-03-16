@@ -6,14 +6,14 @@ import TopMovies from "@components/user/Slider/TopMovies";
 import { getMovieListCategory, getMoveListBanner } from "@services/movieService";
 
 
-function Home() {
+function Movies() {
     const [ActionMovies, setActionMovies] = useState([]);
     const [BanerMovies, setBannerMovies] = useState([]);
 
 
 
     useEffect(() => {
-        document.title = "Trang chủ";
+        document.title = "Phim Lẻ";
     }, []);
     useEffect(() => {
         const fetchMovies = async () => {
@@ -76,4 +76,4 @@ function Home() {
 
     );
 };
-export default Home;
+export default Movies;

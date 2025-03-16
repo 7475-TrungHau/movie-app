@@ -1,29 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getMoveListBanner } from '@services/movieService';
 import { faCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-const Banner = () => {
+const Banner = ({ data, imgUrlBase }) => {
     const [movies, setMovies] = useState([]);
     const [currentSlide, setCurrentSlide] = useState(0);
     const [favorite, setFavorite] = useState(false);
     const [isLogin, setIsLogin] = useState(true);
 
 
-
     useEffect(() => {
-        const fetchMovies = async () => {
-            try {
-                const res = await getMoveListBanner({ page: 1 });
-
-                setMovies(res.data.items);
-            } catch (error) {
-                console.log("Loi lay movie: " + error);
-            }
+        const fetchMovies = () => {
+            setMovies(data);
         }
         fetchMovies();
-    }, []);
+    }, [data]);
 
     useEffect(() => {
 
@@ -58,7 +50,7 @@ const Banner = () => {
                         key={movie._id}
                         className={`absolute w-full h-full transition-opacity duration-1000 ${index === currentSlide ? 'opacity-100' : 'opacity-0'}`}
                         style={{
-                            backgroundImage: `url(${movie.thumb_url})`,
+                            backgroundImage: `url(${imgUrlBase ? imgUrlBase + movie.thumb_url : movie.thumb_url})`,
                             backgroundSize: 'cover',
                             backgroundPosition: 'center',
                             backgroundRepeat: 'no-repeat',
