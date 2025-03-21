@@ -3,7 +3,7 @@ import ReactPlayer from 'react-player';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faVolumeMute, faVolumeUp, faVolumeDown, faGear } from '@fortawesome/free-solid-svg-icons';
 
-const CustomVideoPlayer = ({ src, heigh }) => {
+const CustomVideoPlayer = ({ src, heigh, getTimes }) => {
     const playerRef = useRef(null);
     const [playing, setPlaying] = useState(false);
     const [played, setPlayed] = useState(0);
@@ -53,6 +53,15 @@ const CustomVideoPlayer = ({ src, heigh }) => {
             }
         }
     };
+
+    useEffect(() => {
+        if (playerRef.current) {
+            const duration = playerRef.current.getDuration();
+            if (getTimes) {
+                getTimes(duration);
+            }
+        }
+    }, [playerRef.current, getTimes]);
 
     useEffect(() => {
         const handleFullscreenChange = () => {
@@ -105,7 +114,7 @@ const CustomVideoPlayer = ({ src, heigh }) => {
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
 
-        >   <div onClick={handlePlayerClick} className={`w-full h-[610px] `}>
+        >   <div onClick={handlePlayerClick} className={`w-[100%] h-[610px] object-cover`}>
                 <ReactPlayer
                     ref={playerRef}
                     url={src}

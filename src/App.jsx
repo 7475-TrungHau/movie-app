@@ -18,7 +18,7 @@ function App() {
           <Route path="/movies" element={<Movies title="Home" />} />
           <Route path="/phim-le" element={<Home title="Home" />} />
           <Route path="/anime" element={<Anime title="Anime" />} />
-          <Route path="/xem-phim/" element={<MovieDetail />} />
+          <Route path="/xem-phim/:slug/:tap?" element={<MovieDetail />} />
 
         </Routes>
       </div>

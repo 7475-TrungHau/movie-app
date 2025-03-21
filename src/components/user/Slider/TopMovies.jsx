@@ -52,7 +52,7 @@ const TopMovies = ({ data, title, icons, banner, top, id }) => {
                             key={index}
                             style={{ width: `${100 / itemsPerSlide}%` }}
                         >
-                            <Link>
+                            <Link to={"/xem-phim/" + item.slug}>
                                 <div className="relative  h-5/6 bg-black">
                                     {index < 9 ? (
                                         <div
@@ -76,7 +76,7 @@ const TopMovies = ({ data, title, icons, banner, top, id }) => {
                                 </div>
                             </Link>
                             <div className="w-full h-1/6 p-1">
-                                <Link><p className="hover:text-orange-600 text-white hover:font-bold text-center line-clamp-2 overflow-ellipsis">{item.name}</p></Link>
+                                <Link to={"/xem-phim/" + item.slug}><p className="hover:text-orange-600 text-white hover:font-bold text-center line-clamp-2 overflow-ellipsis">{item.name}</p></Link>
                             </div>
                             <div className={`absolute top-2 right-2 font-bold text-white bg-red-500 p-1 rounded-md ${!banner ? 'hidden' : ''}`}>{banner}</div>
                             {index % 2 === 0 && icons && (
