@@ -54,7 +54,7 @@ const Slider = ({ data, title, icons, banner, number, type, id }) => {
                             key={index}
                             style={{ width: `${100 / itemsPerSlide}%` }}
                         >
-                            <Link>
+                            <Link to={"/xem-phim/" + item.slug}>
                                 <img
                                     className="w-full h-4/5 object-cover object-center"
                                     src={URL_IMG + item.poster_url}
@@ -63,7 +63,7 @@ const Slider = ({ data, title, icons, banner, number, type, id }) => {
                                 />
                             </Link>
                             <div className="w-full h-1/5 p-2">
-                                <Link><p className="hover:text-orange-600 hover:font-bold text-center line-clamp-2 overflow-ellipsis">{item.name}</p></Link>
+                                <Link to={'/xem-phim/' + item.slug}><p className="hover:text-orange-600 hover:font-bold text-center line-clamp-2 overflow-ellipsis">{item.name}</p></Link>
                             </div>
                             <div className={`absolute top-2 right-2 font-bold text-white bg-red-500 p-1 rounded-md ${!banner ? 'hidden' : ''}`}>{banner}</div>
                             {index % 2 === 0 && icons && (
@@ -88,9 +88,11 @@ const Slider = ({ data, title, icons, banner, number, type, id }) => {
                                 <div className="w-full h-1/5 px-2">
                                     <p className="hover:text-orange-600 hover:font-bold text-center line-clamp-2 overflow-ellipsis">{item.name}</p>
                                 </div>
-                                <div className="w-full h-full flex items-center justify-center absolute top-0 left-0 bg-black bg-opacity-50 opacity-0 hover:opacity-40 transition-opacity duration-300">
-                                    <FontAwesomeIcon icon={faPlayCircle} className="text-4xl text-white active:text-orange-500" />
-                                </div>
+                                <Link to={'/xem-phim/' + item.slug}>
+                                    <div className="w-full h-full flex items-center justify-center absolute top-0 left-0 bg-black bg-opacity-50 opacity-0 hover:opacity-40 transition-opacity duration-300">
+                                        <FontAwesomeIcon icon={faPlayCircle} className="text-4xl text-white active:text-orange-500" />
+                                    </div>
+                                </Link>
                             </div>
                         ))}
 

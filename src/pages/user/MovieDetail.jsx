@@ -22,12 +22,15 @@ function MovieDetail() {
     const [totalRating, setTotalRating] = useState(1000);
     const [isFavorite, setIsFavorite] = useState(false);
     const [time, setTime] = useState(0);
+    const [onLoad, setOnLoad] = useState(false);
 
     const { slug, tap } = useParams();
 
     useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [slug, tap]);
 
-
+    useEffect(() => {
         const fetchMovie = async () => {
             try {
                 const ep = tap ? tap : 'tap-01';
