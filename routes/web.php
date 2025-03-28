@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -20,7 +21,13 @@ Route::prefix('admin')->middleware('web')->group(function () {
     Route::middleware('admin')->group(function () {
         // Dashboard
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-
+        Route::get('/category', [CategoryController::class, 'index'])->name('admin.category.index');
+        Route::get('/category/create', [CategoryController::class, 'create'])->name('admin.category.create');
+        Route::post('/category/store', [CategoryController::class, 'store'])->name('admin.category.store');
+        Route::get('/category/edit/{category}', [CategoryController::class, 'edit'])->name('admin.category.edit');
+        Route::put('/category/{id}', [CategoryController::class, 'update'])->name('admin.category.update');
+        Route::delete('/category/delete/{category}', [CategoryController::class, 'destroy'])->name('admin.category.delete');
+        Route::get('/category/{category}', [CategoryController::class, 'show'])->name('admin.category.show');
         // Users
         // Route::resource('users', UserController::class);
 
@@ -29,9 +36,6 @@ Route::prefix('admin')->middleware('web')->group(function () {
 
         // // Episodes
         // Route::resource('episodes', EpisodeController::class)->parameters(['episodes' => 'episode']);
-
-        // // Genres
-        // Route::resource('genres', GenreController::class);
 
         // // Billing (Packages, Subscriptions, Payments)
         // Route::prefix('billing')->group(function () {

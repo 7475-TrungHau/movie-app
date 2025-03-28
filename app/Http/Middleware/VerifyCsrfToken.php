@@ -15,6 +15,7 @@ class VerifyCsrfToken extends Middleware
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     protected $except = [
-        'api/*'
+        'api/*',
+
     ];
 }

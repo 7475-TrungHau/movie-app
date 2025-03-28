@@ -49,7 +49,7 @@ DB_PORT=3306
 DB_DATABASE=movie_db
 DB_USERNAME=root
 
-SESSION_DOMAIN=localhost
+SESSION_DOMAIN=
 
 // đây là smtp cấu hình sẵn cho mail , có thể thay đổi nếu muốn ()
 MAIL_MAILER=smtp
