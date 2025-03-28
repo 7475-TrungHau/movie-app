@@ -31,7 +31,7 @@
                     </svg>
                     Users
                 </a>
-                <a href=""
+                <a href="{{ route('admin.movie.index') }}"
                     class="flex items-center py-3 px-6 text-gray-200 hover:bg-gray-800 hover:text-white transition-colors duration-200 {{ request()->routeIs('admin.movies.*') ? 'bg-gray-800 text-white' : '' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path>

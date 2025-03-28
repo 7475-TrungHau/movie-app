@@ -3,7 +3,7 @@
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\CategoryController;
-use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\MovieController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 
@@ -28,6 +28,14 @@ Route::prefix('admin')->middleware('web')->group(function () {
         Route::put('/category/{id}', [CategoryController::class, 'update'])->name('admin.category.update');
         Route::delete('/category/delete/{category}', [CategoryController::class, 'destroy'])->name('admin.category.delete');
         Route::get('/category/{category}', [CategoryController::class, 'show'])->name('admin.category.show');
+
+        Route::get('/movie', [MovieController::class, 'index'])->name('admin.movie.index');
+        Route::get('/movie/create', [MovieController::class, 'create'])->name('admin.movie.create');
+        Route::post('/movie/store', [MovieController::class, 'store'])->name('admin.movie.store');
+        Route::get('/movie/edit/{movie}', [MovieController::class, 'edit'])->name('admin.movie.edit');
+        Route::put('/movie/{id}', [MovieController::class, 'update'])->name('admin.movie.update');
+        Route::delete('/movie/delete/{movie}', [MovieController::class, 'destroy'])->name('admin.movie.delete');
+        Route::get('/movie/{movie}', [MovieController::class, 'show'])->name('admin.movie.show');
         // Users
         // Route::resource('users', UserController::class);
 

@@ -13,6 +13,7 @@
         </ol>
     </nav>
 
+
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="p-6 border-b border-gray-100">
             <div class="flex items-center">
@@ -27,7 +28,17 @@
                 </div>
             </div>
         </div>
-
+        @if ($errors->any())
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+            <strong class="font-bold">Có lỗi xảy ra!</strong>
+            <span class="block sm:inline">Vui lòng kiểm tra lại thông tin đã nhập.</span>
+            <ul class="list-disc list-inside mt-2">
+                @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
         <form action="{{ route('admin.category.store') }}" method="POST" class="p-6">
             @csrf
 
@@ -102,7 +113,7 @@
                         placeholder="Nhập mô tả chi tiết cho danh mục này...">{{ old('description') }}</textarea>
 
                     @if(!$errors->has('description'))
-                    <p class="mt-1 text-xs text-gray-500">Cung cấp mô tả ngắn gọn về danh mục này để giúp người dùng hiểu nội dung của nó.</p>
+                    <p class="mt-1 text-xs text-gray-500">Cung cấp mô tả ngắn gọn về danh mụ c này để giúp người dùng hiểu nội dung của nó.</p>
                     @endif
 
                     @error('description')
