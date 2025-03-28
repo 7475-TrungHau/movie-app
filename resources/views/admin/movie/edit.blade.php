@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Edit Movie')
-@section('page-title', 'Edit Movie: ' . $movie->name)
+@section('page-title', 'Edit Movie')
 
 @section('styles')
 <style>
@@ -20,12 +20,38 @@
     .form-section:last-child {
         border-bottom: none;
     }
+
+    .media-preview {
+        position: relative;
+    }
+
+    .media-preview .current-media {
+        background-color: rgba(0, 0, 0, 0.03);
+        border-radius: 0.375rem;
+        padding: 0.5rem;
+    }
+
+    .media-preview .current-media-label {
+        background-color: rgba(79, 70, 229, 0.1);
+        color: rgb(79, 70, 229);
+        border-radius: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        display: inline-block;
+        margin-bottom: 0.5rem;
+    }
+
+    .trailer-link {
+        color: #4f46e5;
+        text-decoration: underline;
+    }
 </style>
 @endsection
 
 @section('content')
 <div class="max-w-5xl mx-auto">
-    <form action="{{ route('admin.movie.update', $movie) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+    <form action="{{ route('admin.movie.update', $movie->id) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
         @csrf
         @method('PUT')
 
@@ -49,9 +75,27 @@
         </div>
         @endif
 
+        @if(session('error'))
+
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-600">{{ session('error') }}</h3>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <!-- Basic Information -->
         <div class="bg-white p-6 rounded-lg shadow form-section">
             <h2 class="text-lg font-medium text-gray-900 mb-4">Basic Information</h2>
+            <h3>ID: {{ $movie->id }}</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Movie Title <span class="text-red-500">*</span></label>
@@ -68,8 +112,8 @@
                 <div>
                     <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Type <span class="text-red-500">*</span></label>
                     <select name="type" id="type" required class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                        <option value="movie" {{ (old('type', $movie->type) == 'movie') ? 'selected' : '' }}>Movie</option>
-                        <option value="series" {{ (old('type', $movie->type) == 'series') ? 'selected' : '' }}>Series</option>
+                        <option value="movie" {{ old('type', $movie->type) == 'movie' ? 'selected' : '' }}>Movie</option>
+                        <option value="series" {{ old('type', $movie->type) == 'series' ? 'selected' : '' }}>Series</option>
                     </select>
                 </div>
 
@@ -78,7 +122,7 @@
                     <select name="category_id" id="category_id" required class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                         <option value="">Select a category</option>
                         @foreach ($categories as $category)
-                        <option value="{{ $category->id }}" {{ (old('category_id', $movie->category_id) == $category->id) ? 'selected' : '' }}>
+                        <option value="{{ $category->id }}" {{ old('category_id', $movie->category_id) == $category->id ? 'selected' : '' }}>
                             {{ $category->name }}
                         </option>
                         @endforeach
@@ -131,31 +175,39 @@
             <!-- Poster -->
             <div class="mb-8">
                 <h3 class="text-md font-medium text-gray-700 mb-2">Movie Poster</h3>
+
+                @if($movie->poster_url)
+                <div class="mb-4 media-preview">
+                    <div class="current-media">
+                        <span class="current-media-label">Current Poster</span>
+                        <div class="flex justify-center">
+                            <img src="{{ $movie->poster_url }}" alt="Current poster" class="preview-image">
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 <div class="flex items-center mb-2">
-                    <input type="checkbox" id="use_poster_url" class="toggle-source mr-2" data-target="poster"
-                        {{ !empty($movie->poster_url) && !str_starts_with($movie->poster_url, '/posters/') ? 'checked' : '' }}>
+                    <input type="checkbox" id="use_poster_url" class="toggle-source mr-2" data-target="poster" {{ Str::startsWith($movie->poster_url, 'http') && !Str::startsWith($movie->poster_url, '/') ? 'checked' : '' }}>
                     <label for="use_poster_url" class="text-sm text-gray-600">Use URL instead of uploading file</label>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="md:col-span-2">
-                        <div class="file-input-container {{ !empty($movie->poster_url) && !str_starts_with($movie->poster_url, '/posters/') ? 'hidden' : '' }}" id="poster_file_container">
-                            <label for="poster_file" class="block text-sm font-medium text-gray-700 mb-1">Upload Poster Image</label>
+                        <div class="file-input-container {{ Str::startsWith($movie->poster_url, 'http') && !Str::startsWith($movie->poster_url, '/') ? 'hidden' : '' }}" id="poster_file_container">
+                            <label for="poster_file" class="block text-sm font-medium text-gray-700 mb-1">Upload New Poster Image</label>
                             <input type="file" name="poster_file" id="poster_file" accept="image/*" class="media-file w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                            @if($movie->poster_url && str_starts_with($movie->poster_url, '/posters/'))
-                            <p class="text-xs text-gray-500 mt-1">Current file: {{ basename($movie->poster_url) }}</p>
-                            @endif
                         </div>
-                        <div class="url-input-container {{ !empty($movie->poster_url) && !str_starts_with($movie->poster_url, '/posters/') ? '' : 'hidden' }}" id="poster_url_container">
+                        <div class="url-input-container {{ Str::startsWith($movie->poster_url, 'http') && !Str::startsWith($movie->poster_url, '/') ? '' : 'hidden' }}" id="poster_url_container">
                             <label for="poster_url" class="block text-sm font-medium text-gray-700 mb-1">Poster URL</label>
-                            <input type="url" name="poster_url" id="poster_url" value="{{ old('poster_url', $movie->poster_url) }}" placeholder="https://example.com/image.jpg" class="media-url w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            <input type="url" name="poster_url" id="poster_url" value="{{ old('poster_url', (Str::startsWith($movie->poster_url, 'http')) ? $movie->poster_url : '') }}" placeholder="https://example.com/image.jpg" class="media-url w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                         </div>
                     </div>
                     <div class="md:col-span-1">
                         <p class="block text-sm font-medium text-gray-700 mb-1">Preview</p>
                         <div class="border rounded-md h-48 flex items-center justify-center bg-gray-50" id="poster_preview_container">
-                            <p class="text-gray-400 text-sm {{ $movie->poster_url ? 'hidden' : '' }}" id="poster_placeholder">No poster selected</p>
-                            <img src="{{ $movie->poster_url }}" alt="Poster Preview" class="{{ $movie->poster_url ? '' : 'hidden' }} preview-image" id="poster_preview">
+                            <p class="text-gray-400 text-sm {{ $movie->poster_url ? 'hidden' : '' }}" id="poster_placeholder">No new poster selected</p>
+                            <img src="" alt="Poster Preview" class="hidden preview-image" id="poster_preview">
                         </div>
                     </div>
                 </div>
@@ -164,31 +216,39 @@
             <!-- Thumbnail -->
             <div class="mb-8">
                 <h3 class="text-md font-medium text-gray-700 mb-2">Movie Thumbnail</h3>
+
+                @if($movie->thumbnail_url)
+                <div class="mb-4 media-preview">
+                    <div class="current-media">
+                        <span class="current-media-label">Current Thumbnail</span>
+                        <div class="flex justify-center">
+                            <img src="{{ $movie->thumbnail_url }}" alt="Current thumbnail" class="preview-image">
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 <div class="flex items-center mb-2">
-                    <input type="checkbox" id="use_thumbnail_url" class="toggle-source mr-2" data-target="thumbnail"
-                        {{ !empty($movie->thumbnail_url) && !str_starts_with($movie->thumbnail_url, '/thumbnails/') ? 'checked' : '' }}>
+                    <input type="checkbox" id="use_thumbnail_url" class="toggle-source mr-2" data-target="thumbnail" {{ Str::startsWith($movie->thumbnail_url, 'http') && !Str::startsWith($movie->thumbnail_url, '/') ? 'checked' : '' }}>
                     <label for="use_thumbnail_url" class="text-sm text-gray-600">Use URL instead of uploading file</label>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="md:col-span-2">
-                        <div class="file-input-container {{ !empty($movie->thumbnail_url) && !str_starts_with($movie->thumbnail_url, '/thumbnails/') ? 'hidden' : '' }}" id="thumbnail_file_container">
-                            <label for="thumbnail_file" class="block text-sm font-medium text-gray-700 mb-1">Upload Thumbnail Image</label>
+                        <div class="file-input-container {{ Str::startsWith($movie->thumbnail_url, 'http') && !Str::startsWith($movie->thumbnail_url, '/') ? 'hidden' : '' }}" id="thumbnail_file_container">
+                            <label for="thumbnail_file" class="block text-sm font-medium text-gray-700 mb-1">Upload New Thumbnail Image</label>
                             <input type="file" name="thumbnail_file" id="thumbnail_file" accept="image/*" class="media-file w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                            @if($movie->thumbnail_url && str_starts_with($movie->thumbnail_url, '/thumbnails/'))
-                            <p class="text-xs text-gray-500 mt-1">Current file: {{ basename($movie->thumbnail_url) }}</p>
-                            @endif
                         </div>
-                        <div class="url-input-container {{ !empty($movie->thumbnail_url) && !str_starts_with($movie->thumbnail_url, '/thumbnails/') ? '' : 'hidden' }}" id="thumbnail_url_container">
+                        <div class="url-input-container {{ Str::startsWith($movie->thumbnail_url, 'http') && !Str::startsWith($movie->thumbnail_url, '/') ? '' : 'hidden' }}" id="thumbnail_url_container">
                             <label for="thumbnail_url" class="block text-sm font-medium text-gray-700 mb-1">Thumbnail URL</label>
-                            <input type="url" name="thumbnail_url" id="thumbnail_url" value="{{ old('thumbnail_url', $movie->thumbnail_url) }}" placeholder="https://example.com/thumbnail.jpg" class="media-url w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            <input type="url" name="thumbnail_url" id="thumbnail_url" value="{{ old('thumbnail_url', (Str::startsWith($movie->thumbnail_url, 'http')) ? $movie->thumbnail_url : '') }}" placeholder="https://example.com/thumbnail.jpg" class="media-url w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                         </div>
                     </div>
                     <div class="md:col-span-1">
                         <p class="block text-sm font-medium text-gray-700 mb-1">Preview</p>
                         <div class="border rounded-md h-48 flex items-center justify-center bg-gray-50" id="thumbnail_preview_container">
-                            <p class="text-gray-400 text-sm {{ $movie->thumbnail_url ? 'hidden' : '' }}" id="thumbnail_placeholder">No thumbnail selected</p>
-                            <img src="{{ $movie->thumbnail_url }}" alt="Thumbnail Preview" class="{{ $movie->thumbnail_url ? '' : 'hidden' }} preview-image" id="thumbnail_preview">
+                            <p class="text-gray-400 text-sm {{ $movie->thumbnail_url ? 'hidden' : '' }}" id="thumbnail_placeholder">No new thumbnail selected</p>
+                            <img src="" alt="Thumbnail Preview" class="hidden preview-image" id="thumbnail_preview">
                         </div>
                     </div>
                 </div>
@@ -197,44 +257,46 @@
             <!-- Trailer -->
             <div class="mb-4">
                 <h3 class="text-md font-medium text-gray-700 mb-2">Movie Trailer</h3>
+
+                @if($movie->trailer_url)
+                <div class="mb-4 media-preview">
+                    <div class="current-media">
+                        <span class="current-media-label">Current Trailer</span>
+                        <div class="text-center">
+                            @if(Str::startsWith($movie->trailer_url, 'http') && !Str::startsWith($movie->trailer_url, '/'))
+                            <a href="{{ $movie->trailer_url }}" target="_blank" class="trailer-link">View current trailer</a>
+                            @else
+                            <a href="{{ $movie->trailer_url }}" target="_blank" class="trailer-link">View uploaded trailer</a>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 <div class="flex items-center mb-2">
-                    <input type="checkbox" id="use_trailer_url" class="toggle-source mr-2" data-target="trailer"
-                        {{ !empty($movie->trailer_url) && !str_starts_with($movie->trailer_url, '/trailers/') ? 'checked' : '' }}>
+                    <input type="checkbox" id="use_trailer_url" class="toggle-source mr-2" data-target="trailer" {{ Str::startsWith($movie->trailer_url, 'http') && !Str::startsWith($movie->trailer_url, '/') ? 'checked' : '' }}>
                     <label for="use_trailer_url" class="text-sm text-gray-600">Use URL instead of uploading file</label>
                 </div>
 
-                <div class="file-input-container {{ !empty($movie->trailer_url) && !str_starts_with($movie->trailer_url, '/trailers/') ? 'hidden' : '' }}" id="trailer_file_container">
-                    <label for="trailer_file" class="block text-sm font-medium text-gray-700 mb-1">Upload Trailer Video</label>
+                <div class="file-input-container {{ Str::startsWith($movie->trailer_url, 'http') && !Str::startsWith($movie->trailer_url, '/') ? 'hidden' : '' }}" id="trailer_file_container">
+                    <label for="trailer_file" class="block text-sm font-medium text-gray-700 mb-1">Upload New Trailer Video</label>
                     <input type="file" name="trailer_file" id="trailer_file" accept="video/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                    @if($movie->trailer_url && str_starts_with($movie->trailer_url, '/trailers/'))
-                    <p class="text-xs text-gray-500 mt-1">Current file: {{ basename($movie->trailer_url) }}</p>
-                    @endif
                 </div>
-                <div class="url-input-container {{ !empty($movie->trailer_url) && !str_starts_with($movie->trailer_url, '/trailers/') ? '' : 'hidden' }}" id="trailer_url_container">
+                <div class="url-input-container {{ Str::startsWith($movie->trailer_url, 'http') && !Str::startsWith($movie->trailer_url, '/') ? '' : 'hidden' }}" id="trailer_url_container">
                     <label for="trailer_url" class="block text-sm font-medium text-gray-700 mb-1">Trailer URL</label>
-                    <input type="url" name="trailer_url" id="trailer_url" value="{{ old('trailer_url', $movie->trailer_url) }}" placeholder="https://example.com/trailer.mp4" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    <input type="url" name="trailer_url" id="trailer_url" value="{{ old('trailer_url', (Str::startsWith($movie->trailer_url, 'http')) ? $movie->trailer_url : '') }}" placeholder="https://example.com/trailer.mp4" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                 </div>
             </div>
         </div>
 
         <!-- Form Actions -->
-        <div class="flex justify-between space-x-3">
+        <div class="flex justify-end space-x-3">
             <a href="{{ route('admin.movie.index') }}" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50 transition-colors duration-200">
-                Back to List
+                Cancel
             </a>
-            <div class="space-x-2">
-                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition-colors duration-200">
-                    Update Movie
-                </button>
-                <a href="#" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors duration-200"
-                    onclick="event.preventDefault(); if(confirm('Are you sure you want to delete this movie?')) document.getElementById('delete-form').submit();">
-                    Delete
-                </a>
-                <form id="delete-form" action="{{ route('admin.movie.delete', $movie) }}" method="POST" class="hidden">
-                    @csrf
-                    @method('DELETE')
-                </form>
-            </div>
+            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition-colors duration-200">
+                Update Movie
+            </button>
         </div>
     </form>
 </div>
@@ -242,6 +304,24 @@
 
 @section('scripts')
 <script>
+    // Handle slug generation
+    document.getElementById('name').addEventListener('blur', function() {
+        const slugInput = document.getElementById('slug');
+        const currentSlug = slugInput.value;
+        const originalSlug = "{{ $movie->slug }}";
+
+        // Only auto-generate slug if it's empty or matches the original (meaning it hasn't been manually changed)
+        if (!currentSlug || currentSlug === originalSlug) {
+            const name = this.value;
+            const slug = name.toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^\w\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-');
+            slugInput.value = slug;
+        }
+    });
+
     // Handle media source toggle
     document.querySelectorAll('.toggle-source').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
@@ -252,6 +332,9 @@
             if (this.checked) {
                 fileContainer.classList.add('hidden');
                 urlContainer.classList.remove('hidden');
+                // Clear file input when switching to URL
+                const fileInput = document.getElementById(`${target}_file`);
+                if (fileInput) fileInput.value = '';
             } else {
                 fileContainer.classList.remove('hidden');
                 urlContainer.classList.add('hidden');

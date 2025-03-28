@@ -47,6 +47,9 @@ class MovieController extends Controller
             $file->move(public_path($folder), $fileName);
             return '/' . $folder . '/' . $fileName;
         } elseif ($request->filled($url)) {
+            if ($existingUrl && file_exists(public_path($existingUrl))) {
+                unlink(public_path($existingUrl));
+            }
             return $request->input($url);
         }
         return $existingUrl;
