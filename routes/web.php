@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\MovieController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\EpisodeController;
 use App\Http\Controllers\AuthController;
 
 Route::get('/', function () {
@@ -36,6 +37,14 @@ Route::prefix('admin')->middleware('web')->group(function () {
         Route::put('/movie/{id}', [MovieController::class, 'update'])->name('admin.movie.update');
         Route::delete('/movie/delete/{movie}', [MovieController::class, 'destroy'])->name('admin.movie.delete');
         Route::get('/movie/{movie}', [MovieController::class, 'show'])->name('admin.movie.show');
+        Route::get('/movie/{movie}/episodes', [EpisodeController::class, 'index'])->name('admin.movie.episodes');
+        Route::get('/movie/{movie}/episodes/create', [EpisodeController::class, 'create'])->name('admin.movie.episodes.create');
+        Route::post('/movie/{movie}/episodes/store', [EpisodeController::class, 'store'])->name('admin.movie.episodes.store');
+        Route::get('/movie/{movie}/episodes/edit/{episode}', [EpisodeController::class, 'edit'])->name('admin.movie.episodes.edit');
+        Route::put('/movie/{movie}/episodes/{episode}', [EpisodeController::class, 'update'])->name('admin.movie.episodes.update');
+        Route::delete('/movie/{movie}/episodes/delete/{episode}', [EpisodeController::class, 'destroy'])->name('admin.movie.episodes.delete');
+        Route::get('/movie/{movie}/episodes/{episode}', [EpisodeController::class, 'show'])->name('admin.movie.episodes.show');
+        Route::get('/movie/{movie}/episodes/{episode}/watch', [EpisodeController::class, 'watch'])->name('admin.movie.episodes.watch');
         // Users
         // Route::resource('users', UserController::class);
 

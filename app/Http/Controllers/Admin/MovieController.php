@@ -12,7 +12,7 @@ class MovieController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Movie::query();
+        $query = Movie::query()->with('category')->withCount('episodes');
 
         // Search
         if ($search = $request->input('search')) {
