@@ -22,4 +22,9 @@ class Package extends Model
     {
         return $this->hasMany(Subscription::class);
     }
+
+    public function movies()
+    {
+        return $this->belongsToMany(Movie::class, 'movie_package');
+    }
 }

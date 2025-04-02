@@ -26,6 +26,11 @@ class Movie extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function packages()
+    {
+        return $this->belongsToMany(Package::class, 'movie_package');
+    }
+
     public function episodes()
     {
         return $this->hasMany(Episode::class);
