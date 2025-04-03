@@ -1,18 +1,55 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import logo from "@/assets/images/FPT-Play-Logo.jpg";
-import { Link } from 'react-router-dom'; // Nếu bạn sử dụng React Router
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCaretDown, faSearch, faWallet } from '@fortawesome/free-solid-svg-icons';
-import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useToast } from '@/context/ToastContext';
+import { getUserInfo } from '@/services/authService';
+import { setToken } from '../../../services/api';
 
 function Header() {
+    const [userInfo, setUserInfo] = useState({});
     const [openMenuNav, setOpenMenuNav] = useState(false);
     const [openMenu, setOpenMenu] = useState(false);
     const [isLogin, setIsLogin] = useState(false);
     const [pageCurrent, setPageCurrent] = useState("home");
+    const { success, error } = useToast();
+    const navigate = useNavigate();
 
     const location = useLocation();
+    useEffect(() => {
+        const fetchUserInfo = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                console.log("Token: ", token);
+                setToken(token);
+
+                if (token) {
+                    const res = await getUserInfo();
+                    console.log("User info: ", res.data);
+                    setUserInfo(res.data.user);
+
+                    setIsLogin(true);
+                } else {
+                    setIsLogin(false);
+                }
+            } catch (error) {
+                console.error("Lỗi khi lấy thông tin người dùng:", error);
+                setIsLogin(false);
+            }
+        };
+        fetchUserInfo();
+    }, [localStorage.getItem('token')]);
+
+    // useEffect(() => {
+    //     const token = localStorage.getItem('token');
+    //     if (token) {
+
+    //         setIsLogin(true);
+    //     } else {
+    //         setIsLogin(false);
+    //     }
+    // });
 
     useEffect(() => {
         if (location.pathname === '/') {
@@ -45,7 +82,17 @@ function Header() {
         console.log(openMenu);
         setOpenMenu(!openMenu);
     }
-
+    const logout = () => {
+        try {
+            localStorage.removeItem('token');
+            setIsLogin(false);
+            navigate('/');
+            success("Đăng xuất thành công", 3000);
+        } catch (error) {
+            console.error("Lỗi khi đăng xuất:", error);
+            error("Đăng xuất không thành công", 3000);
+        }
+    }
 
     return (
         <header className="text-white bg-black py-4 shadow-md gap-4 fixed top-0 left-1/2 transform -translate-x-1/2 w-full z-50 ">
@@ -68,7 +115,7 @@ function Header() {
                             <Link to="/anime" className={`hover:text-orange-500 ${pageCurrent === 'anime' ? 'font-bold ' : 'opacity-80'}`}>Anime</Link>
                         </li>
                         <li className={`${pageCurrent === 'phim-le' || pageCurrent === 'phim-bo' ? 'block' : 'hidden'}`}>
-                            <Link to={`/${pageCurrent === 'phim-le' ?? 'phim-bo'}`} className="hover:text-orange-500 font-bold">{pageCurrent === 'phim-le' ? 'Phim Lẻ' : 'Phim Bộ'}</Link>
+                            <Link to={`/${pageCurrent === 'phim-le'}`} className="hover:text-orange-500 font-bold">{pageCurrent === 'phim-le' ? 'Phim Lẻ' : 'Phim Bộ'}</Link>
                         </li>
                         <li className='relative'>
                             <p className="cursor-pointer opacity-80">
@@ -100,14 +147,18 @@ function Header() {
                     <Link to={`/search`} className="hover:text-orange-500 pt-1">
                         <FontAwesomeIcon icon={faSearch} className='hover:text-orange-500 text-xl cursor-pointer' />
                     </Link>
-                    {!isLogin ? (
+                    {isLogin ? (
                         <div className="flex items-center gap-2">
                             <button type="button" className="text-white cursor-pointer bg-gradient-to-r from-orange-500 via-orange-700 to-orange-400 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-orange-300 dark:focus:ring-orange-800 font-bold text-md rounded-lg px-3 py-2 text-center mx-2">
                                 <FontAwesomeIcon icon={faWallet} className='mr-2' />
                                 Mua Gói
                             </button>
                             <div className="relative flex items-center gap-1">
-                                <div className="w-8 h-8 rounded-xl bg-gray-700" id='openMenu' onClick={handleOpenMenu}></div>
+                                <div className="w-8 h-8 rounded-xl bg-gray-700 px-1" id='openMenu' onClick={handleOpenMenu}
+                                    style={{ backgroundImage: `url(${userInfo.avatar ?? ""})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+
+
+                                </div>
                                 <FontAwesomeIcon
                                     id='openMenu1'
                                     onClick={handleOpenMenu}
@@ -116,14 +167,31 @@ function Header() {
                                 />
                                 {openMenu && (
                                     <ul className='absolute top-full right-0 w-[400%] bg-gray-800 text-white rounded-lg p-2 mt-2'>
-                                        <li className='hover:text-orange-500 cursor-pointer'>Đăng nhập</li>
-                                        <li className='hover:text-orange-500 cursor-pointer'>Đăng ký</li>
+                                        <li>
+                                            <div className='my-1'>
+                                                <p className='text-sm flex gap-2'>Xin chào <p className='text-sm font-bold'>{userInfo.username}</p></p>
+
+                                                <p className='text-sm'>{userInfo.email}</p>
+                                            </div>
+                                        </li>
+                                        <li className='hover:text-orange-500 cursor-pointer'>Tài khoản của tôi</li>
+
+                                        <Link to="/login">
+                                            <li className='hover:text-orange-500 cursor-pointer'>Đăng nhập</li>
+                                        </Link>
+                                        <Link to={"/register"}>
+                                            <li className='hover:text-orange-500 cursor-pointer'>Đăng ký</li>
+                                        </Link>
+                                        <li className='hover:text-orange-500 cursor-pointer' onClick={logout}>Đăng xuất</li>
                                     </ul>
                                 )}
                             </div>
                         </div>
                     ) : (
-                        <button type="button" className="text-white cursor-pointer bg-gradient-to-r from-orange-500 via-orange-700 to-orange-400 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-orange-300 dark:focus:ring-orange-800 font-bold text-md rounded-lg px-5 py-2 text-center">Login</button>
+                        <Link to={"/login"} className="hover:text-orange-500 pt-1">
+                            <button type="button" className="text-white cursor-pointer bg-gradient-to-r from-orange-500 via-orange-700 to-orange-400 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-orange-300 dark:focus:ring-orange-800 font-bold text-md rounded-lg px-5 py-2 text-center">Login</button>
+
+                        </Link>
                     )}
                 </div>
             </div>

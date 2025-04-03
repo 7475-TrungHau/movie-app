@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import CommentSection from "@components/user/CommentSection";
 import Banner from "@components/user/Banner";
 import Slider from "@components/user/Slider/Slider";
 import TopMovies from "@components/user/Slider/TopMovies";
 import { getMovieList } from "@services/movieService";
+import { useToast } from "@context/ToastContext";
 
 
 function Anime() {
@@ -12,6 +13,15 @@ function Anime() {
     const [TopAnime, setTopAnime] = useState([]);
     const [AnimeNhat, setAnimeNhat] = useState([]);
     //Hồi ức ko tên
+
+    const { success, error } = useToast();
+    const toastShownRef = useRef(false);
+    useEffect(() => {
+        if (!toastShownRef.current) {
+            error("Chào mừng bạn đến với Anime", 5000);
+            toastShownRef.current = true;
+        }
+    }, []);
 
     useEffect(() => {
         document.title = "Anime";
