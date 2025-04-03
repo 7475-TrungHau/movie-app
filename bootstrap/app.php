@@ -14,7 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Đăng ký alias cho middleware của bạn
+
+
         $middleware->alias([
+            'auth.jwt' => \App\Http\Middleware\CheckUser::class,
             'admin' => \App\Http\Middleware\CheckAdmin::class,
         ]);
     })

@@ -22,9 +22,19 @@ class AuthController extends Controller
                 'email' => 'required|email|unique:users',
                 'password' => 'required|min:6|string',
                 'password_confirmation' => 'required|same:password',
-                'full_name' => 'required|string|max:255'
+                'full_name' => 'string|max:255'
+            ], [
+                'username.required' => 'Ten dang nhap khong duoc de trong',
+                'email.required' => 'Email khong duoc de trong',
+                'password.required' => 'Mat khau khong duoc de trong',
+                'password_confirmation.required' => 'Xac nhan mat khau khong duoc de trong',
+                'full_name.required' => 'Ho ten khong duoc de trong',
+            ], [
+                'username.unique' => 'Ten dang nhap da ton tai',
+                'email.unique' => 'Email da ton tai',
+                'password.min' => 'Mat khau phai co it nhat 6 ky tu',
+                'password_confirmation.same' => 'Mat khau xac nhan khong khop',
             ]);
-            Log::info('Validated data:', $validated);
 
             $user = User::create([
 
@@ -43,7 +53,7 @@ class AuthController extends Controller
                 'token' => $token,
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['errors' => $e->errors(), 'message' => 'Loi validate'], 422);
+            return response()->json(['errors' => $e->validator->errors()->all(), 'message' => 'Loi validate: ' . $e->getMessage()], 422);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Something went wrong: ' . $e->getMessage()], 500);
         }
