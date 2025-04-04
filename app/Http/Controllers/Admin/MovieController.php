@@ -25,7 +25,7 @@ class MovieController extends Controller
         $query->orderBy($sortBy, $sortDirection);
 
         // Pagination
-        $movies = $query->with('category')->paginate(1);
+        $movies = $query->with('category')->paginate(10);
 
         return view('admin.movie.index', compact('movies'));
     }
@@ -61,6 +61,7 @@ class MovieController extends Controller
             $request->validate([
                 'slug' => 'required|max:512|unique:movies|string',
                 'name' => 'required|max:512|string',
+                'origin_name' => 'nullable|max:512|string',
                 'description' => 'nullable|string',
                 'actor' => 'nullable|string',
                 'director' => 'nullable|string',
@@ -76,7 +77,7 @@ class MovieController extends Controller
                 'thumbnail_file' => 'nullable|image|max:4096',
             ]);
 
-            $data = $request->only(['slug', 'name', 'description', 'actor', 'director', 'year', 'type', 'genres', 'category_id']);
+            $data = $request->only(['slug', 'name', 'description', 'actor', 'director', 'year', 'type', 'genres', 'category_id', 'origin_name']);
             $data['poster_url'] = $this->handleFileUpload($request, 'poster_file', 'poster_url', 'posters');
             $data['trailer_url'] = $this->handleFileUpload($request, 'trailer_file', 'trailer_url', 'trailers');
             $data['thumbnail_url'] = $this->handleFileUpload($request, 'thumbnail_file', 'thumbnail_url', 'thumbnails');
@@ -109,7 +110,7 @@ class MovieController extends Controller
             'director' => 'nullable|string',
             'year' => 'nullable|integer',
             'type' => 'required|in:movie,series',
-
+            'origin_name' => 'nullable|string|max:512',
             'genres' => 'nullable|string',
             'category_id' => 'required|exists:categories,id',
             'poster_url' => 'nullable|string|max:1000',
@@ -120,7 +121,7 @@ class MovieController extends Controller
             'thumbnail_file' => 'nullable|image|max:4096',
         ]);
 
-        $data = $request->only(['slug', 'name', 'description', 'actor', 'director', 'year', 'type', 'genres', 'category_id']);
+        $data = $request->only(['slug', 'name', 'description', 'actor', 'director', 'year', 'type', 'genres', 'category_id', 'origin_name']);
         $data['poster_url'] = $this->handleFileUpload($request, 'poster_file', 'poster_url', 'posters', $movie->poster_url);
         $data['trailer_url'] = $this->handleFileUpload($request, 'trailer_file', 'trailer_url', 'trailers', $movie->trailer_url);
         $data['thumbnail_url'] = $this->handleFileUpload($request, 'thumbnail_file', 'thumbnail_url', 'thumbnails', $movie->thumbnail_url);

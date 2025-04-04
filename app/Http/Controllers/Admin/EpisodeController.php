@@ -50,7 +50,7 @@ class EpisodeController extends Controller
         try {
             $request->validate([
                 'title' => 'required|string|max:255',
-                'slug' => 'required|string|max:255|unique:episodes,slug,' . $movie->id, // Thêm điều kiện unique cho trường 'slug'
+                'slug' => 'required|string|max:255', // Thêm điều kiện unique cho trường 'slug'
                 'description' => 'nullable|string',
                 'video_url' => 'required|url',
                 'release_date' => 'required|date',
@@ -84,7 +84,7 @@ class EpisodeController extends Controller
         try {
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
-                'slug' => 'required|string|max:255|unique:episodes,slug,' . $episode->id,
+                'slug' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'release_date' => 'required|date',
                 'episode_number' => 'required|integer',

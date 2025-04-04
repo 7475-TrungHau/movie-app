@@ -108,7 +108,11 @@
                     <input type="text" name="slug" id="slug" value="{{ old('slug', $movie->slug) }}" required
                         class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                 </div>
-
+                <div>
+                    <label for="origin_name" class="block text-sm font-medium text-gray-700 mb-1">Original Title</label>
+                    <input type="text" name="origin_name" id="origin_name" value="{{ old('origin_name', $movie->origin_name) }}"
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                </div>
                 <div>
                     <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Type <span class="text-red-500">*</span></label>
                     <select name="type" id="type" required class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">

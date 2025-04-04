@@ -22,13 +22,13 @@ class AuthController extends Controller
                 'email' => 'required|email|unique:users',
                 'password' => 'required|min:6|string',
                 'password_confirmation' => 'required|same:password',
-                'full_name' => 'string|max:255'
+
             ], [
                 'username.required' => 'Ten dang nhap khong duoc de trong',
                 'email.required' => 'Email khong duoc de trong',
                 'password.required' => 'Mat khau khong duoc de trong',
                 'password_confirmation.required' => 'Xac nhan mat khau khong duoc de trong',
-                'full_name.required' => 'Ho ten khong duoc de trong',
+
             ], [
                 'username.unique' => 'Ten dang nhap da ton tai',
                 'email.unique' => 'Email da ton tai',
@@ -40,7 +40,7 @@ class AuthController extends Controller
 
                 'email' => $request->email,
                 'username' => $request->username,
-                'full_name' => $request->full_name,
+                'full_name' => $request->username,
                 'password' => Hash::make($request->password),
                 'role' => 'user',
             ]);

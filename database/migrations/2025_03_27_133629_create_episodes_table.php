@@ -20,7 +20,7 @@ return new class extends Migration
             $table->dateTime('release_date')->nullable();
             $table->integer('episode_number')->unsigned(); // so tap
             $table->string('thumbnail_url', 1000)->nullable();
-            $table->string('slug', 512)->unique();
+            $table->string('slug', 512);
             $table->timestamps();
         });
     }

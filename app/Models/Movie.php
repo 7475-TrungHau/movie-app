@@ -10,6 +10,7 @@ class Movie extends Model
         'slug',
         'name',
         'description',
+        'origin_name',
         'actor',
         'director',
         'year',
@@ -18,7 +19,9 @@ class Movie extends Model
         'type',
         'thumbnail_url',
         'genres',
-        'category_id'
+        'category_id',
+        'rating',
+        'view',
     ];
 
     public function category()

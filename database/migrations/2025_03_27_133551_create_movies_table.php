@@ -14,9 +14,12 @@ return new class extends Migration
         Schema::create('movies', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('slug', 512)->unique();
+            $table->string('origin_name', 512)->nullable()->comment('Tên gốc');
             $table->string('name', 512);
             $table->text('genres')->nullable();
             $table->text('description')->nullable();
+            $table->double('rating')->default(0)->comment('Điểm đánh giá');
+            $table->integer('view')->default(0)->comment('Số lượt xem');
             $table->text('actor')->nullable();
             $table->text('director')->nullable();
             $table->integer('year')->nullable();
