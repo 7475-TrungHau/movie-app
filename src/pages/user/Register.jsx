@@ -4,7 +4,7 @@ import { registerUser } from "@services/authService";
 import { useToast } from "@context/ToastContext";
 
 const Register = () => {
-    const [formData, setFormData] = useState({ username: "", email: "", password: "", password_confirmation: "", full_name: "" });
+    const [formData, setFormData] = useState({ username: "", email: "", password: "", password_confirmation: "" });
     const [error, setError] = useState("");
     const [autoLogin, setAutoLogin] = useState(false);
     const navigate = useNavigate();
@@ -21,7 +21,7 @@ const Register = () => {
             errorToast("Mật khẩu không khớp!");
             return;
         }
-        setFormData({ ...formData, full_name: formData.username });
+
 
         try {
             const res = await registerUser(formData);

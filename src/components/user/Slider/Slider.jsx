@@ -15,11 +15,14 @@ import { Link } from "react-router-dom";
 import { faAngleLeft, faAngleRight, faPlayCircle } from "@fortawesome/free-solid-svg-icons";
 import { IoSparkles } from "react-icons/io5";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { BASE_IMAGE_URL } from "../../../constants";
+import { useToast } from "../../../context/ToastContext";
 
 
 const Slider = ({ data, title, icons, banner, number, type, id }) => {
-    const URL_IMG = "https://phimimg.com/"; // URL của nơi chứa ảnh
+
     const [currentSlide, setCurrentSlide] = useState(0);
+    const { error } = useToast();
     const itemsPerSlide = number ?? 5;
 
     const nextSlide = () => {
@@ -54,18 +57,30 @@ const Slider = ({ data, title, icons, banner, number, type, id }) => {
                             key={index}
                             style={{ width: `${100 / itemsPerSlide}%` }}
                         >
-                            <Link to={"/xem-phim/" + item.slug}>
+                            <Link to={item.packages[0].name === 'Basic' ? "/xem-phim/" + item.slug : localStorage.getItem('user') ? "/xem-phim/" + item.slug : "/login"}
+                                onClick={() => {
+                                    if (item.packages[0].name !== 'Basic' && !localStorage.getItem('user')) {
+                                        error("Vui lòng đăng nhập để xem phim này!");
+                                    }
+                                }}>
                                 <img
                                     className="w-full h-4/5 object-cover object-center"
-                                    src={URL_IMG + item.poster_url}
+                                    src={item.poster_url.startsWith('http') ? item.poster_url : BASE_IMAGE_URL + item.poster_url}
                                     alt={item.name}
                                     title={item.name}
                                 />
                             </Link>
                             <div className="w-full h-1/5 p-2">
-                                <Link to={'/xem-phim/' + item.slug}><p className="hover:text-orange-600 hover:font-bold text-center line-clamp-2 overflow-ellipsis">{item.name}</p></Link>
+                                <Link to={item.packages[0].name === 'Basic' ? "/xem-phim/" + item.slug : localStorage.getItem('user') ? "/xem-phim/" + item.slug : "/login"}
+                                    onClick={() => {
+                                        if (item.packages[0].name !== 'Basic' && !localStorage.getItem('user')) {
+                                            error("Vui lòng đăng nhập để xem phim này!");
+                                        }
+                                    }}>
+                                    <p className="hover:text-orange-600 hover:font-bold text-center line-clamp-2 overflow-ellipsis">{item.name}</p>
+                                </Link>
                             </div>
-                            <div className={`absolute top-2 right-2 font-bold text-white bg-red-500 p-1 rounded-md ${!banner ? 'hidden' : ''}`}>{banner}</div>
+                            <div className={`absolute top-2 right-2 font-bold text-white bg-red-500 p-1 rounded-md ${!banner || item.packages[0].price == 0 ? 'hidden' : ''}`}>{item.packages[0].name ?? ""}</div>
                             {index % 2 === 0 && icons && (
                                 <div className="absolute top-2 left-2 font-bold rounded-md p-1 bg-white">
                                     <IoSparkles color="blue" className="text-2xl" />
@@ -78,10 +93,11 @@ const Slider = ({ data, title, icons, banner, number, type, id }) => {
                                 className="relative h-36 bg-gray-300 rounded-md overflow-hidden cursor-pointer transform transition-transform duration-300 hover:scale-105 shadow-md"
                                 key={index}
                                 style={{ width: `${100 / itemsPerSlide}%` }}
+                                title={item.name}
                             >
                                 <img
                                     className="w-full h-4/5 object-cover object-center"
-                                    src={URL_IMG + item.thumb_url}
+                                    src={item.thumbnail_url.startsWith('http') ? item.thumbnail_url : BASE_IMAGE_URL + item.thumbnail_url}
                                     alt={item.name}
                                     title={item.name}
                                 />
@@ -93,6 +109,7 @@ const Slider = ({ data, title, icons, banner, number, type, id }) => {
                                         <FontAwesomeIcon icon={faPlayCircle} className="text-4xl text-white active:text-orange-500" />
                                     </div>
                                 </Link>
+                                <div className={`absolute top-2 right-2 font-bold text-white bg-red-500 p-1 rounded-md ${!banner || item.packages[0].price == 0 ? 'hidden' : ''}`}>{item.packages[0].name ?? ""}</div>
                             </div>
                         ))}
 

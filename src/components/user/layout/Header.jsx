@@ -25,13 +25,29 @@ function Header() {
                 setToken(token);
 
                 if (token) {
-                    const res = await getUserInfo();
-                    console.log("User info: ", res.data);
-                    setUserInfo(res.data.user);
+                    try {
 
-                    setIsLogin(true);
+
+                        const res = await getUserInfo();
+                        console.log("User info: ", res.data);
+                        setUserInfo(res.data.user);
+                        let user = {
+                            username: res.data.user.username,
+                            fullname: res.data.user.fullname,
+                            email: res.data.user.email,
+                            id: res.data.user.id,
+                        };
+                        localStorage.setItem('user', JSON.stringify(user));
+                        setIsLogin(true);
+                    } catch (error) {
+                        console.error("Lỗi khi lấy thông tin người dùng:", error);
+                        setIsLogin(false);
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                    }
                 } else {
                     setIsLogin(false);
+                    localStorage.removeItem('user');
                 }
             } catch (error) {
                 console.error("Lỗi khi lấy thông tin người dùng:", error);

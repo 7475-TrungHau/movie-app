@@ -12,6 +12,7 @@ import Register from "./pages/user/Register";
 import Login from "./pages/user/Login";
 import "./App.css";
 import { useNavigate } from "react-router-dom";
+import PlayMovie from "./pages/user/PlayMovie";
 
 function App() {
   return (
@@ -24,7 +25,8 @@ function App() {
             <Route path="/movies" element={<Movies title="Home" />} />
             <Route path="/phim-le" element={<Home title="Home" />} />
             <Route path="/anime" element={<Anime title="Anime" />} />
-            <Route path="/xem-phim/:slug/:tap?" element={<MovieDetail />} />
+            {/* <Route path="/xem-phim/:slug/:tap?" element={<MovieDetail />} /> */}
+            <Route path="/xem-phim/:slug/:tap?" element={<PlayMovie />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
           </Routes>
