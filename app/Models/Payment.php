@@ -27,6 +27,6 @@ class Payment extends Model
 
     public function subscription()
     {
-        return $this->belongsTo(Subscription::class);
+        return $this->belongsTo(Subscription::class, 'subscription_id');
     }
 }

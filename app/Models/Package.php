@@ -12,11 +12,14 @@ class Package extends Model
         'description',
         'price',
         'duration_days',
-        'features'
+        'features',
+        'is_active'
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
+        'is_active' => 'boolean',
+        'duration_days' => 'integer',
     ];
 
     public function subscriptions()

@@ -12,10 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('movie_package', function (Blueprint $table) {
-            $table->foreignId('movie_id')->constrained('movies')->onDelete('cascade');
-            $table->foreignId('package_id')->constrained('packages')->onDelete('cascade');
-            $table->primary(['movie_id', 'package_id']);
+            $table->id();
+            $table->unsignedBigInteger('movie_id');
+            $table->unsignedBigInteger('package_id');
             $table->timestamps();
+
+            // Foreign keys
+            $table->foreign('movie_id')->references('id')->on('movies')->onDelete('cascade');
+            $table->foreign('package_id')->references('id')->on('packages')->onDelete('cascade');
+
+            // Unique constraint to prevent duplicate entries
+            $table->unique(['movie_id', 'package_id']);
         });
     }
 

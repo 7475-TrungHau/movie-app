@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - @yield('title')</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @yield('styles')
 </head>
@@ -45,12 +46,26 @@
                     </svg>
                     Category
                 </a>
-                <a href=""
+                <a href="{{ route('admin.package.index') }}"
                     class="flex items-center py-3 px-6 text-gray-200 hover:bg-gray-800 hover:text-white transition-colors duration-200 {{ request()->routeIs('admin.billing.packages.*') ? 'bg-gray-800 text-white' : '' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h18M9 3v18m6-18v18m-9-6h6"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 6H4a2 2 0 00-2 2v8a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2zM10 12h4"></path>
                     </svg>
-                    Billing
+                    Packages
+                </a>
+                <a href="{{ route('admin.subscriptions.index') }}"
+                    class="flex items-center py-3 px-6 text-gray-200 hover:bg-gray-800 hover:text-white transition-colors duration-200 {{ request()->routeIs('admin.subscriptions.*') ? 'bg-gray-800 text-white' : '' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553 2.276a1 1 0 010 1.448L15 16m-6-6l-4.553 2.276a1 1 0 000 1.448L9 16m6-6v6m-6-6v6"></path>
+                    </svg>
+                    Subscriptions
+                </a>
+                <a href="{{ route('admin.payments.index') }}"
+                    class="flex items-center py-3 px-6 text-gray-200 hover:bg-gray-800 hover:text-white transition-colors duration-200 {{ request()->routeIs('admin.payments.*') ? 'bg-gray-800 text-white' : '' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18m-7 5h7"></path>
+                    </svg>
+                    Payments
                 </a>
             </nav>
         </aside>

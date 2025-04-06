@@ -10,6 +10,7 @@ use App\Models\Rating;
 use App\Models\Category;
 use App\Models\Episode;
 use App\Models\MovieCategory;
+use App\Models\Package;
 use Illuminate\Support\Facades\Log;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -57,6 +58,9 @@ class MovieController extends Controller
             }
             $movies = $query->paginate((int)$perPage);
         }
+        $movies->load(['packages' => function ($query) {
+            $query->select('packages.id', 'packages.name', 'packages.price')->orderBy('price', 'asc')->limit(1);
+        }]);
 
         return response()->json($movies);
     }

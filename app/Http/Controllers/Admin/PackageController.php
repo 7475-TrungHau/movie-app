@@ -3,184 +3,209 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Package;
 use App\Models\Movie;
+use App\Models\Package;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class PackageController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Hiển thị danh sách các gói
      */
-    public function index(Request $request)
+    public function index()
     {
-        try {
-            $query = Package::query();
-            // Thêm filter hoặc search nếu cần
-            $packages = $query->paginate($request->input('per_page', 15));
-            return response()->json($packages);
-        } catch (\Exception $e) {
-            Log::error("Error listing packages (Admin): " . $e->getMessage());
-            return response()->json(['error' => 'Không thể lấy danh sách gói'], 500);
-        }
+        $packages = Package::paginate(10);
+        return view('admin.package.index', compact('packages'));
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Hiển thị form tạo gói mới
      */
+    public function create()
+    {
+        // Ban đầu chỉ truyền trang đầu tiên
+        $movies = Movie::orderBy('name')->paginate(100);
+        return view('admin.package.create', compact('movies'));
+    }
+
+    /**
+     * Lấy danh sách phim theo phân trang qua AJAX
+     */
+    public function getMovies(Request $request)
+    {
+        $query = Movie::orderBy('name');
+
+        // Tìm kiếm theo tên nếu có
+        if ($request->has('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        // Lọc theo loại phim nếu có
+        if ($request->has('type') && in_array($request->type, ['series', 'movie'])) {
+            $query->where('type', $request->type);
+        }
+
+        // Sắp xếp theo
+        if ($request->has('sort')) {
+            switch ($request->sort) {
+                case 'name_desc':
+                    $query->orderBy('name', 'desc');
+                    break;
+                case 'episodes_asc':
+                    $query->orderBy('episodes_count', 'asc');
+                    break;
+                case 'episodes_desc':
+                    $query->orderBy('episodes_count', 'desc');
+                    break;
+                default:
+                    $query->orderBy('name', 'asc');
+                    break;
+            }
+        }
+
+        $movies = $query->paginate(20);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('admin.package.partials.movie-list', compact('movies'))->render(),
+                'pagination' => view('admin.package.partials.pagination', compact('movies'))->render(),
+            ]);
+        }
+
+        return $movies;
+    }
+
+
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:packages,name',
-            'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'duration_days' => 'required|integer|min:1',
-            'is_active' => 'sometimes|boolean',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
         try {
-            $package = Package::create($validator->validated());
-            return response()->json($package, 201);
+            DB::beginTransaction();
+
+            // Debug
+            Log::info('Package store - Request data:', $request->all());
+
+            $validated = $request->validate([
+                'name' => 'required|string|max:100',
+                'price' => 'required|numeric|min:0',
+                'duration_days' => 'required|integer|min:1',
+                'description' => 'nullable|string',
+                'features' => 'nullable|string',
+                'movie_ids' => 'nullable|array',
+                'movie_ids.*' => 'exists:movies,id',
+            ]);
+
+            $validated['is_active'] = $request->has('is_active') ? 1 : 0;
+
+
+            Log::info('Package store - Validated data:', $validated);
+
+            $package = new Package();
+            $package->name = $validated['name'];
+            $package->price = $validated['price'];
+            $package->duration_days = $validated['duration_days'];
+            $package->description = $validated['description'] ?? null;
+            $package->features = $validated['features'] ?? null;
+            $package->is_active = $validated['is_active'];
+            $package->save();
+
+            // Debug
+            Log::info('Package created with ID: ' . $package->id);
+
+            // Thêm phim vào gói nếu có
+            if ($request->has('movie_ids') && is_array($request->movie_ids)) {
+                $package->movies()->attach($request->movie_ids);
+                // Debug
+                Log::info('Attached movies: ', $request->movie_ids);
+            }
+
+            DB::commit();
+
+            return redirect()->route('admin.package.index')->with('success', 'Gói đã được tạo thành công!');
         } catch (\Exception $e) {
-            Log::error("Error creating package (Admin): " . $e->getMessage());
-            return response()->json(['error' => 'Tạo gói thất bại'], 500);
+            DB::rollBack();
+            Log::error('Package store error: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+
+            return back()->withInput()->withErrors(['error' => 'Có lỗi xảy ra khi tạo gói: ' . $e->getMessage()]);
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Package $package)
+
+    public function edit(Package $package)
     {
-        try {
-            // Load thêm danh sách phim thuộc gói này
-            $package->load('movies:id,name'); // Chỉ lấy id và name của phim
-            return response()->json($package);
-        } catch (\Exception $e) {
-            Log::error("Error showing package {$package->id} (Admin): " . $e->getMessage());
-            return response()->json(['error' => 'Không thể lấy thông tin gói'], 500);
-        }
+        $movies = Movie::orderBy('name')->paginate(100);
+        $selectedMovieIds = $package->movies()->pluck('movies.id')->toArray();
+
+        return view('admin.package.edit', compact('package', 'movies', 'selectedMovieIds'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+
     public function update(Request $request, Package $package)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|required|string|max:255|unique:packages,name,' . $package->id,
-            'description' => 'nullable|string',
-            'price' => 'sometimes|required|numeric|min:0',
-            'duration_days' => 'sometimes|required|integer|min:1',
-            'is_active' => 'sometimes|boolean',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
         try {
-            $package->update($validator->validated());
-            return response()->json($package);
+            DB::beginTransaction();
+
+            $validated = $request->validate([
+                'name' => 'required|string|max:100|unique:packages,name,' . $package->id,
+                'price' => 'required|numeric|min:0',
+                'duration_days' => 'required|integer|min:1',
+                'description' => 'nullable|string',
+                'features' => 'nullable|string',
+                'movie_ids' => 'nullable|array',
+                'movie_ids.*' => 'exists:movies,id',
+            ]);
+
+
+            $validated['is_active'] = $request->has('is_active') ? 1 : 0;
+
+
+            $package->update($validated);
+
+
+            if ($request->has('movie_ids')) {
+                $package->movies()->sync($request->movie_ids);
+            } else {
+                $package->movies()->detach();
+            }
+            DB::commit();
+
+            return redirect()->route('admin.package.index')
+                ->with('success', 'Gói đã được cập nhật thành công!');
         } catch (\Exception $e) {
-            Log::error("Error updating package {$package->id} (Admin): " . $e->getMessage());
-            return response()->json(['error' => 'Cập nhật gói thất bại'], 500);
+            DB::rollBack();
+            Log::error('Package update error: ' . $e->getMessage());
+
+            return back()->withInput()->withErrors(['error' => 'Có lỗi xảy ra khi cập nhật gói: ' . $e->getMessage()]);
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Package $package)
     {
         try {
-            // Xóa các liên kết phim trước khi xóa gói (hoặc để cascade delete xử lý)
-            // $package->movies()->detach(); // Nếu không dùng cascade delete
+            DB::beginTransaction();
 
+            // Xóa các liên kết với phim
+            $package->movies()->detach();
             $package->delete();
-            return response()->json(null, 204);
+
+            DB::commit();
+
+            return redirect()->route('admin.package.index')
+                ->with('success', 'Gói đã được xóa thành công!');
         } catch (\Exception $e) {
-            Log::error("Error deleting package {$package->id} (Admin): " . $e->getMessage());
-            return response()->json(['error' => 'Xóa gói thất bại'], 500);
+            DB::rollBack();
+
+            Log::error('Package delete error: ' . $e->getMessage());
+
+            return back()->withErrors(['error' => 'Có lỗi xảy ra khi xóa gói: ' . $e->getMessage()]);
         }
     }
 
-    // --- Quản lý Movies trong Package ---
-
-    /**
-     * Gán danh sách phim vào một gói (đồng bộ hóa).
-     * Nhận vào một mảng các movie_id.
-     */
-    public function syncMovies(Request $request, Package $package)
+    public function showMovies(Package $package)
     {
-        $validator = Validator::make($request->all(), [
-            'movie_ids' => 'required|array',
-            'movie_ids.*' => 'required|integer|exists:movies,id', // Đảm bảo movie_id tồn tại
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        try {
-            $movieIds = $request->input('movie_ids');
-            $package->movies()->sync($movieIds); // sync sẽ xóa các liên kết cũ và thêm các liên kết mới
-
-            // Load lại danh sách phim đã gán
-            $package->load('movies:id,name');
-
-            return response()->json([
-                'message' => 'Đã cập nhật danh sách phim cho gói.',
-                'package' => $package
-            ]);
-        } catch (\Exception $e) {
-            Log::error("Error syncing movies for package {$package->id} (Admin): " . $e->getMessage());
-            return response()->json(['error' => 'Cập nhật phim cho gói thất bại'], 500);
-        }
-    }
-
-    /**
-     * Thêm một phim vào gói.
-     */
-    public function addMovie(Request $request, Package $package, Movie $movie)
-    {
-        try {
-            // Kiểm tra xem phim đã tồn tại trong gói chưa
-            if ($package->movies()->where('movie_id', $movie->id)->exists()) {
-                return response()->json(['message' => 'Phim đã có trong gói này.'], 400);
-            }
-
-            $package->movies()->attach($movie->id);
-
-            return response()->json(['message' => 'Đã thêm phim vào gói.']);
-        } catch (\Exception $e) {
-            Log::error("Error adding movie {$movie->id} to package {$package->id} (Admin): " . $e->getMessage());
-            return response()->json(['error' => 'Thêm phim vào gói thất bại'], 500);
-        }
-    }
-
-    /**
-     * Xóa một phim khỏi gói.
-     */
-    public function removeMovie(Request $request, Package $package, Movie $movie)
-    {
-        try {
-            $detached = $package->movies()->detach($movie->id);
-
-            if ($detached) {
-                return response()->json(['message' => 'Đã xóa phim khỏi gói.']);
-            } else {
-                return response()->json(['message' => 'Phim không tồn tại trong gói này.'], 404);
-            }
-        } catch (\Exception $e) {
-            Log::error("Error removing movie {$movie->id} from package {$package->id} (Admin): " . $e->getMessage());
-            return response()->json(['error' => 'Xóa phim khỏi gói thất bại'], 500);
-        }
+        $movies = $package->movies()->paginate(10);
+        return view('admin.package.movies', compact('package', 'movies'));
     }
 }
