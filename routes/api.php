@@ -14,7 +14,7 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('
 // User routes (cần đăng nhập)
 Route::middleware('auth.jwt')->group(function () {
     Route::get('/user', [UserController::class, 'getUser'])->name('user');
-
+    Route::get('/user/ratings/{movieId}', [UserController::class, 'getRatingByMovie'])->name('user.rating.movie');
     // Movie   (đánh giá, lịch sử xem)
     Route::post('/movies/{movieId}/rating', [MovieController::class, 'Rating'])->name('movie.rating');
     Route::post('/episodes/{episodeId}/history', [MovieController::class, 'setHistory'])->name('episode.history');
@@ -24,6 +24,7 @@ Route::middleware('auth.jwt')->group(function () {
 Route::get('/movies', [MovieController::class, 'index'])->name('movies.index');
 Route::get('/movies/{identifier}', [MovieController::class, 'show'])->name('movies.show');
 Route::get('/movies/{movieId}/episodes', [MovieController::class, 'getEpisodes'])->name('movies.episodes');
+
 
 // Admin routes (cần quyền admin)
 Route::middleware(['auth.jwt.admin'])->prefix('admin')->group(function () {

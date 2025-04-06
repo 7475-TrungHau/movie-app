@@ -6,13 +6,17 @@ use App\Http\Controllers\Controller;
 use Exception;
 use Illuminate\Http\Request;
 use App\Models\Movie;
+use App\Models\Rating;
 use App\Models\Category;
 use App\Models\Episode;
 use App\Models\MovieCategory;
+use Illuminate\Support\Facades\Log;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class MovieController extends Controller
 {
+
+
 
     // ví dụ request: http://localhost:8000/api/movies?category=[slug]&sort_by=[sort_by]&limit=5&per_page=10&sort_dir=[asc|desc]
     // ví dụ request: http://localhost:8000/api/movies/1 // hoặc http://localhost:8000/api/movies/slug-movie
@@ -27,10 +31,14 @@ class MovieController extends Controller
                 $q->where('slug', $slug);
             });
         }
+        if ($request->has('genre')) {
+            $genreSlug = $request->input('genre');
+            $query->whereRaw("REPLACE(LOWER(CONVERT(genres USING utf8mb4)), ' ', '-') LIKE ?", ['%' . $genreSlug . '%']);
+        }
 
         $sortBy = $request->input('sort_by', 'created_at');
         $sortDir = strtolower($request->input('sort_dir', 'desc'));
-        $allowedSorts = ['created_at', 'view', 'name'];
+        $allowedSorts = ['created_at', 'view', 'name', 'rating'];
 
         if (in_array($sortBy, $allowedSorts) && in_array($sortDir, ['asc', 'desc'])) {
             $query->orderBy($sortBy, $sortDir);
@@ -56,7 +64,9 @@ class MovieController extends Controller
     public function show(Request $request, $identifier)
     {
         $query = Movie::with('category')->withCount('episodes')->withCount('ratings');
-
+        $query->with(['episodes' => function ($q) {
+            $q->orderBy('episode_number', 'asc');
+        }]);
         if (is_numeric($identifier)) {
             $movie = $query->find($identifier);
             if ($movie) {
@@ -69,6 +79,8 @@ class MovieController extends Controller
         if (!$movie) {
             return response()->json(['message' => 'Movie not found'], 404);
         }
+        $movie->view = $movie->view + 1;
+        $movie->save();
 
         return response()->json($movie);
     }
@@ -84,27 +96,51 @@ class MovieController extends Controller
         return response()->json($movie->episodes);
     }
 
+    public function getMovieWithEpisodes(Request $request, $movieId)
+    {
+        $movie = Movie::with('episodes')->find($movieId);
+
+        if (!$movie) {
+            return response()->json(['message' => 'Movie not found'], 404);
+        }
+
+        return response()->json($movie);
+    }
+
     public function Rating(Request $request, $movieId)
     {
         try {
             $user = JWTAuth::parseToken()->authenticate();
+
             if (!$user) {
-                return response()->json(['message' => 'Xác thực user thất bại'], 401);
+                return response()->json(['message' => 'User authentication failed'], 401);
             }
+
             $movie = Movie::find($movieId);
             if (!$movie) {
-                return response()->json(['message' => 'Không thấy movie'], 404);
+                return response()->json(['message' => 'Movie not found'], 404);
             }
+
             $request->validate([
-                'rating' => 'required|integer|min:1|max:5',
+                'rating' => 'required|numeric|min:1|max:5',
             ]);
+
             $rating = $request->input('rating');
-            $movie->Ratings()->updateOrCreate(
-                ['user_id' => $user->id],
-                ['rating' => $rating]
+            Rating::updateOrInsert(
+                ['user_id' => $user->id, 'movie_id' => $movieId],
+                ['rating_value' => $rating]
             );
-            $movie->rating = $movie->Ratings()->avg('rating');
+
+
+            $averageRating = Rating::where('movie_id', $movieId)->avg('rating_value');
+            $movie->rating = $averageRating;
             $movie->save();
+
+            return response()->json([
+                'message' => 'Cảm ơn bạn đã đánh giá',
+                'rating' => $movie->rating,
+                'total_rating' => Rating::where('movie_id', $movieId)->count()
+            ]);
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage(), 'message' => 'Có lỗi xảy ra'], 500);
         }

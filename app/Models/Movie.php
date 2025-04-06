@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Package; // Thêm use
 
 class Movie extends Model
 {
@@ -34,6 +35,11 @@ class Movie extends Model
         return $this->belongsToMany(Package::class, 'movie_package');
     }
 
+    public function avgRating()
+    {
+        return $this->hasOne(Rating::class)->selectRaw('avg(rating_value) as rating')->groupBy('movie_id');
+    }
+
     public function episodes()
     {
         return $this->hasMany(Episode::class);
@@ -46,7 +52,7 @@ class Movie extends Model
 
     public function ratings()
     {
-        return $this->hasMany(Rating::class);
+        return $this->hasMany(Rating::class, 'movie_id', 'id');
     }
 
     public function favorites()

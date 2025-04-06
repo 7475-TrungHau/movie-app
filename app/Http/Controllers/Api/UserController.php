@@ -29,4 +29,26 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+    public function getRatingByMovie(Request $request, $movieId)
+    {
+        try {
+            $user = $request->attributes->get('author_user');
+            if (!$user) {
+                return response()->json(['message' => 'Xác thực user thất bại'], 401);
+            }
+            $rating = $user->ratings()->where('movie_id', $movieId)->first();
+            if (!$rating) {
+                return response()->json(['message' => 'Không tìm thấy đánh giá cho phim này'], 404);
+            }
+            return response()->json([
+                'rating' => $rating->rating_value,
+                'message' => 'Lấy thông tin đánh giá thành công'
+            ])->setStatusCode(200);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'Có lỗi xảy ra: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
