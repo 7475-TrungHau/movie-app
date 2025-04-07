@@ -18,6 +18,14 @@ class UserController extends Controller
             //     ->where('end_date', '>=', now())
             //     ->with(['package'])
             //     ->first();
+
+            $activeSubscription = $user->subscriptions()
+                ->where('end_date', '>=', now())
+                ->where('status', 'active')
+                ->with(['package'])
+                ->first();
+
+            $user->package_name = $activeSubscription->package->is_active ? $activeSubscription->package->name : null;
             return response()->json([
                 'user' => $user,
                 // 'subscriptions' => $subscription ? $subscription : null,

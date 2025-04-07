@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\MovieController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\PaymentController;
 
 // Auth routes
 Route::post('/register', [AuthController::class, 'register'])->name('register');
@@ -18,12 +19,17 @@ Route::middleware('auth.jwt')->group(function () {
     // Movie   (đánh giá, lịch sử xem)
     Route::post('/movies/{movieId}/rating', [MovieController::class, 'Rating'])->name('movie.rating');
     Route::post('/episodes/{episodeId}/history', [MovieController::class, 'setHistory'])->name('episode.history');
+    Route::get('/payment/vnpay/{package_id}', [PaymentController::class, 'createVnpayPayment'])->name('payment.vnpay');
+
+    Route::get('/payment/getPayment/{subscription_id}', [PaymentController::class, 'getPayment'])->name('payment.getPayment');
+    Route::get('/payment/packages', [PaymentController::class, 'getPackages'])->name('payment.packages');
 });
 
 // Public movie routes ( không cần đăng nhập)
 Route::get('/movies', [MovieController::class, 'index'])->name('movies.index');
 Route::get('/movies/{identifier}', [MovieController::class, 'show'])->name('movies.show');
 Route::get('/movies/{movieId}/episodes', [MovieController::class, 'getEpisodes'])->name('movies.episodes');
+Route::get('/payment/return', [PaymentController::class, 'vnpayReturn'])->name('payment.return');
 
 
 // Admin routes (cần quyền admin)
