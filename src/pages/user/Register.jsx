@@ -29,6 +29,7 @@ const Register = () => {
 
             if (autoLogin && res.data.token) {
                 localStorage.setItem("token", res.data.token);
+                
                 navigate('/');
             } else {
                 navigate("/login");

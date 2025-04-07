@@ -11,8 +11,9 @@ import MovieDetail from "./pages/user/MovieDetail";
 import Register from "./pages/user/Register";
 import Login from "./pages/user/Login";
 import "./App.css";
-import { useNavigate } from "react-router-dom";
+import PaymentResult from "./components/user/payment/PaymentResult";
 import PlayMovie from "./pages/user/PlayMovie";
+import SubscriptionPlans from "./pages/user/SubscriptionPlans";
 
 function App() {
   return (
@@ -29,6 +30,9 @@ function App() {
             <Route path="/xem-phim/:slug/:tap?" element={<PlayMovie />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/subscription" element={<SubscriptionPlans />} />
+            <Route path="/payment-success" element={<PaymentResult />} />
+            <Route path="/payment-failed" element={<PaymentResult />} />
           </Routes>
         </div>
         <Footer />

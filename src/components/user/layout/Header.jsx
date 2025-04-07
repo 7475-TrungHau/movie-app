@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import logo from "@/assets/images/FPT-Play-Logo.jpg";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCaretDown, faSearch, faWallet } from '@fortawesome/free-solid-svg-icons';
+import { faCaretDown, faSearch, faWallet, faCrown, faStar } from '@fortawesome/free-solid-svg-icons';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useToast } from '@/context/ToastContext';
 import { getUserInfo } from '@/services/authService';
@@ -15,6 +15,7 @@ function Header() {
     const [pageCurrent, setPageCurrent] = useState("home");
     const { success, error } = useToast();
     const navigate = useNavigate();
+
 
     const location = useLocation();
     useEffect(() => {
@@ -36,7 +37,10 @@ function Header() {
                             fullname: res.data.user.fullname,
                             email: res.data.user.email,
                             id: res.data.user.id,
+                            package_name: res.data.user.package_name,
                         };
+                        console.log("--------User: ", user);
+
                         localStorage.setItem('user', JSON.stringify(user));
                         setIsLogin(true);
                     } catch (error) {
@@ -165,15 +169,22 @@ function Header() {
                     </Link>
                     {isLogin ? (
                         <div className="flex items-center gap-2">
-                            <button type="button" className="text-white cursor-pointer bg-gradient-to-r from-orange-500 via-orange-700 to-orange-400 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-orange-300 dark:focus:ring-orange-800 font-bold text-md rounded-lg px-3 py-2 text-center mx-2">
-                                <FontAwesomeIcon icon={faWallet} className='mr-2' />
-                                Mua Gói
-                            </button>
+                            <Link to={"/subscription"}>
+                                {userInfo.package_name && userInfo.package_name !== "Basic" ? (
+                                    <button type="button" className="text-white cursor-pointer bg-gradient-to-r from-green-500 via-green-700 to-green-400 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 font-bold text-md rounded-lg px-3 py-2 text-center mx-2">
+                                        <FontAwesomeIcon icon={userInfo.package_name === "VIP" ? faStar : faCrown} className='mr-2' />
+                                        {userInfo.package_name === "VIP" ? "VIP" : "PRO"}
+                                    </button>
+                                ) : (
+                                    <button type="button" className="text-white cursor-pointer bg-gradient-to-r from-orange-500 via-orange-700 to-orange-400 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-orange-300 dark:focus:ring-orange-800 font-bold text-md rounded-lg px-3 py-2 text-center mx-2">
+                                        <FontAwesomeIcon icon={faWallet} className='mr-2' />
+                                        Mua Gói
+                                    </button>
+                                )}
+                            </Link>
                             <div className="relative flex items-center gap-1">
                                 <div className="w-8 h-8 rounded-xl bg-gray-700 px-1" id='openMenu' onClick={handleOpenMenu}
                                     style={{ backgroundImage: `url(${userInfo.avatar ?? ""})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-
-
                                 </div>
                                 <FontAwesomeIcon
                                     id='openMenu1'
@@ -186,12 +197,10 @@ function Header() {
                                         <li>
                                             <div className='my-1'>
                                                 <p className='text-sm flex gap-2'>Xin chào <p className='text-sm font-bold'>{userInfo.username}</p></p>
-
                                                 <p className='text-sm'>{userInfo.email}</p>
                                             </div>
                                         </li>
                                         <li className='hover:text-orange-500 cursor-pointer'>Tài khoản của tôi</li>
-
                                         <Link to="/login">
                                             <li className='hover:text-orange-500 cursor-pointer'>Đăng nhập</li>
                                         </Link>
@@ -206,7 +215,6 @@ function Header() {
                     ) : (
                         <Link to={"/login"} className="hover:text-orange-500 pt-1">
                             <button type="button" className="text-white cursor-pointer bg-gradient-to-r from-orange-500 via-orange-700 to-orange-400 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-orange-300 dark:focus:ring-orange-800 font-bold text-md rounded-lg px-5 py-2 text-center">Login</button>
-
                         </Link>
                     )}
                 </div>
