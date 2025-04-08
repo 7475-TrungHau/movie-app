@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Package;
+use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -44,6 +46,16 @@ class AuthController extends Controller
                 'password' => Hash::make($request->password),
                 'role' => 'user',
             ]);
+            $package = Package::where('name', 'Basic')->first();
+            if ($package) {
+                Subscription::create([
+                    'user_id' => $user->id,
+                    'package_id' => $package->id,
+                    'start_date' => now(),
+                    'end_date' => now()->addDays($package->duration),
+                    'status' => 'active',
+                ]);
+            }
 
             $token = JWTAuth::fromUser($user);
 
@@ -71,6 +83,13 @@ class AuthController extends Controller
         if (!$token = JWTAuth::attempt($credentials)) {
             return response()->json(['error' => 'Dang nhap that bai'], 401);
         }
+
+        $user = JWTAuth::user();
+        Subscription::where('user_id', $user->id)
+            ->where('end_date', '<', now())
+            ->where('status', 'active')
+            ->update(['status' => 'expired']);
+
         return response()->json([
             'message' => 'Dang nhap thanh cong',
             'token' => $token,

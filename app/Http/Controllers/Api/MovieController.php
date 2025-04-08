@@ -59,7 +59,7 @@ class MovieController extends Controller
             $movies = $query->paginate((int)$perPage);
         }
         $movies->load(['packages' => function ($query) {
-            $query->select('packages.id', 'packages.name', 'packages.price')->orderBy('price', 'asc')->limit(1);
+            $query->select('packages.id', 'packages.name', 'packages.price')->where('packages.is_active', 1);
         }]);
 
         return response()->json($movies);
@@ -173,6 +173,10 @@ class MovieController extends Controller
             return response()->json(['error' => $th->getMessage(), 'message' => 'Có lỗi xảy ra'], 500);
         }
     }
+
+
+
+
 
     // Dung để test
     public function genRandomViews(Request $request, $type = 'create')

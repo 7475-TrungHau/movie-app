@@ -16,7 +16,7 @@ class MovieController extends Controller
 
         // Search
         if ($search = $request->input('search')) {
-            $query->whereFullText(['name', 'description', 'genres', 'actor', 'director'], $search);
+            $query->whereFullText(['name', 'origin_name', 'description', 'genres', 'actor', 'director'], $search);
         }
 
         // Sorting

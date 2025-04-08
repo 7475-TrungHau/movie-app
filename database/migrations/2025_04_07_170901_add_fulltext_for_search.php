@@ -12,13 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('movies', function (Blueprint $table) {
-            $table->text('name')->change();
-            $table->text('description')->nullable()->change();
-            $table->text('genres')->nullable()->change();
-            $table->text('actor')->nullable()->change();
-            $table->text('director')->nullable()->change();
 
-            $table->fullText(['name', 'description', 'genres', 'actor', 'director']);
+            $table->fullText(['name'], 'ft_movies_name');
+            $table->fullText(['origin_name'], 'ft_movies_origin_name');
+            $table->fullText(['genres'], 'ft_movies_genres');
+            $table->fullText(['description', 'actor', 'director'], 'ft_movies_others');
         });
     }
 
@@ -28,7 +26,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('movies', function (Blueprint $table) {
-            //
+            $table->dropIndex('ft_movies_name');
+            $table->dropIndex('ft_movies_origin_name');
+            $table->dropIndex('ft_movies_genres');
+            $table->dropIndex('ft_movies_others');
         });
     }
 };
