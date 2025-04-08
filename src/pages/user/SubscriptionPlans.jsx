@@ -38,7 +38,7 @@ function SubscriptionPlans() {
 
     // Hàm xử lý khi chọn gói
     const handleSelectPlan = (plan) => {
-        if (user.package_name !== plan.name) { // Chỉ cho chọn nếu chưa đăng ký gói đó
+        if (user != null && user.package_name !== plan.name) { // Chỉ cho chọn nếu chưa đăng ký gói đó
             setSelectedPlan(plan);
         }
     };
@@ -124,7 +124,7 @@ function SubscriptionPlans() {
                                     <li className="text-gray-300">Không có tính năng đặc biệt</li>
                                 )}
                             </ul>
-                            {user.package_name === plan.name ? (
+                            {user != null && user.package_name === plan.name ? (
                                 <button
                                     className="text-white font-bold py-2 px-4 rounded bg-gray-700 cursor-not-allowed"
                                     disabled

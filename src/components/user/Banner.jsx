@@ -12,6 +12,10 @@ const Banner = ({ data, imgUrlBase }) => {
     const [favorite, setFavorite] = useState(false);
     const [isLogin, setIsLogin] = useState(true);
     const { error } = useToast();
+    const packageNotBanner = "Basic"; // Gói không có banner
+    const package1 = "VIP";
+    const package2 = "PRO";
+    const user = JSON.parse(localStorage.getItem('user')) ?? null;
 
     useEffect(() => {
         const checkLoginStatus = () => {
@@ -57,7 +61,23 @@ const Banner = ({ data, imgUrlBase }) => {
     const handleSetFavorite = () => {
         setFavorite(!favorite);
     }
-
+    const handleClick = (item) => {
+        if (!item.packages.some(pkg => pkg.name === packageNotBanner) && user == null) {
+            error("Vui lòng đăng nhập để xem phim này!");
+            return;
+        }
+        if (item.packages.some(pkg => pkg.name === packageNotBanner) || item.packages.isEmpty) {
+            window.location.href = "/xem-phim/" + item.slug;
+        }
+        if (!item.packages.some(pkg => pkg.name === packageNotBanner) && user != null) {
+            if (item.packages.some(pkg => user.packages?.some(user_pkg => user_pkg.name === pkg.name))) {
+                window.location.href = "/xem-phim/" + item.slug;
+            }
+            else {
+                error("Vui lòng nâng cấp gói để xem phim này!");
+            }
+        }
+    }
 
     return (
         <div className="banner relative w-full  mt-20" style={{ height: `calc(100vh - 80px)` }}>
@@ -95,17 +115,16 @@ const Banner = ({ data, imgUrlBase }) => {
                         </div>
 
                         <div className='flex gap-2'>
-                            <Link to={movies[currentSlide].packages[0].name === "Basic" ? `/xem-phim/${movies[currentSlide].slug}` : localStorage.getItem('user') ? `/xem-phim/${movies[currentSlide].slug}` : `/login`} className="flex items-center gap-2">
-                                <button className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                                    onClick={() => {
-                                        if (!isLogin && movies[currentSlide].packages[0].name !== "Basic") {
-                                            error("Vui lòng đăng nhập để xem phim trả phí!");
-                                        }
-                                    }}
-                                >
-                                    Xem ngay
-                                </button>
-                            </Link>
+                            <button className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                                onClick={() => {
+                                    handleClick(movies[currentSlide])
+                                }}
+                            >
+                                Xem ngay
+                            </button>
+                            {/* <Link to={movies[currentSlide].packages[0].name === "Basic" ? `/xem-phim/${movies[currentSlide].slug}` : localStorage.getItem('user') ? `/xem-phim/${movies[currentSlide].slug}` : `/login`} className="flex items-center gap-2">
+
+                            </Link> */}
                             <button className="bg-gray-500/50 hover:bg-gray-700/50 text-white font-bold py-2 px-4 rounded flex items-center gap-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />

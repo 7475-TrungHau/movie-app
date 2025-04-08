@@ -22,6 +22,10 @@ const TopMovies = ({ data, title, icons, banner, top, id }) => {
     const [currentSlide, setCurrentSlide] = useState(0);
     const { error } = useToast();
     const itemsPerSlide = 5;
+    const packageNotBanner = "Basic"; // Gói không có banner
+    const package1 = "VIP";
+    const package2 = "PRO";
+    const user = JSON.parse(localStorage.getItem('user')) ?? null;
 
     const nextSlide = () => {
         console.log(currentSlide);
@@ -39,6 +43,32 @@ const TopMovies = ({ data, title, icons, banner, top, id }) => {
         slider.style.transform = `translateX(-${(currentSlide * 100) / data.length}%)`;
     }, [currentSlide, data]);
 
+    const handleClick = (item) => {
+        if (!user) {
+            if (!item.packages.some(pkg => pkg.name === packageNotBanner)) {
+                error("Vui lòng đăng nhập để xem phim này!");
+                return;
+            }
+            window.location.href = "/xem-phim/" + item.slug;
+            return;
+        }
+
+        if (item.packages.some(pkg => pkg.name === packageNotBanner) || item.packages.length === 0) {
+            window.location.href = "/xem-phim/" + item.slug;
+            return;
+        }
+
+        const hasAccess = item.packages.some(pkg =>
+            user.packages?.some(user_pkg => user_pkg.name === pkg.name)
+        );
+
+        if (hasAccess) {
+            window.location.href = "/xem-phim/" + item.slug;
+        } else {
+            error("Vui lòng nâng cấp gói để xem phim này!");
+        }
+    };
+
     return (
         <div className="relative">
             <div className="flex items-center justify-between mb-4">
@@ -55,8 +85,30 @@ const TopMovies = ({ data, title, icons, banner, top, id }) => {
                             key={index}
                             style={{ width: `${100 / itemsPerSlide}%` }}
                             title={item.name}
+                            onClick={() => handleClick(item)}
                         >
-                            <Link to={item.packages[0].name === 'Basic' ? "/xem-phim/" + item.slug : localStorage.getItem('user') ? "/xem-phim/" + item.slug : "/login"}
+                            <div className="relative  h-5/6 bg-black">
+                                {index < 9 ? (
+                                    <div
+                                        className="absolute -top-1/4 w-3/5 h-full  text-[10rem] left-5 font-bold text-gray-200/50 select-none"
+                                    >
+                                        {index + 1}
+                                    </div>
+                                ) : (
+                                    <div
+                                        className="absolute -top-1/4 w-2/5 h-full  text-[10rem] left-0 font-bold text-gray-200/50 select-none"
+                                    >
+                                        {index + 1}
+                                    </div>
+                                )}
+                                <img
+                                    className={`absolute top-0 right-0  h-full object-cover object-center ${index < 9 ? 'w-3/5' : 'w-2/5'}`}
+                                    src={item.poster_url.startsWith('http') ? item.poster_url : BASE_IMAGE_URL + item.poster_url}
+                                    alt={item.name}
+
+                                />
+                            </div>
+                            {/* <Link to={item.packages[0].name === 'Basic' ? "/xem-phim/" + item.slug : localStorage.getItem('user') ? "/xem-phim/" + item.slug : "/login"}
                                 onClick={() => {
                                     if (item.packages[0].name !== 'Basic' && !localStorage.getItem('user')) {
                                         error("Vui lòng đăng nhập để xem phim này!");
@@ -83,23 +135,24 @@ const TopMovies = ({ data, title, icons, banner, top, id }) => {
 
                                     />
                                 </div>
-                            </Link>
+                            </Link> */}
                             <div className="w-full h-1/6 p-1">
-                                <Link to={item.packages[0].name === 'Basic' ? "/xem-phim/" + item.slug : localStorage.getItem('user') ? "/xem-phim/" + item.slug : "/login"}
-                                    onClick={() => {
-                                        if (item.packages[0].name !== 'Basic' && !localStorage.getItem('user')) {
-                                            error("Vui lòng đăng nhập để xem phim này!");
-                                        }
-                                    }}><p className="hover:text-orange-600 text-white hover:font-bold text-center line-clamp-2 overflow-ellipsis"
-
-                                    >{item.name}</p></Link>
+                                <p className="hover:text-orange-600 text-white hover:font-bold text-center line-clamp-2 overflow-ellipsis">{item.name}</p>
                             </div>
-                            <div className={`absolute top-2 right-2 font-bold text-white bg-red-500 p-1 rounded-md ${!banner || item.packages[0].price == 0 ? 'hidden' : ''}`}>{item.packages[0].name || banner}</div>
-                            {index % 2 === 0 && icons && (
-                                <div className="absolute top-2 left-2 font-bold rounded-md p-1 bg-white">
-                                    <IoSparkles color="blue" className="text-2xl" />
-                                </div>
+                            {!item.packages.some(pkg => pkg.name === packageNotBanner) && (
+                                <>
+                                    {item.packages.some(pkg => pkg.name === package1) && (
+                                        <div className="absolute top-2 right-2 font-bold text-white bg-red-500 p-1 rounded-md">{package1}</div>
+                                    )}
+                                    {item.packages.some(pkg => pkg.name === package2) && (
+                                        <div className="absolute top-2 left-2 font-bold rounded-md p-1 bg-white">
+                                            <IoSparkles color="blue" className="text-2xl" />
+                                        </div>
+                                    )}
+                                </>
                             )}
+
+
                         </div>
                     ))}
 

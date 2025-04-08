@@ -24,6 +24,10 @@ const Slider = ({ data, title, icons, banner, number, type, id }) => {
     const [currentSlide, setCurrentSlide] = useState(0);
     const { error } = useToast();
     const itemsPerSlide = number ?? 5;
+    const packageNotBanner = "Basic"; // Gói không có banner
+    const package1 = "VIP";
+    const package2 = "PRO";
+    const user = JSON.parse(localStorage.getItem('user')) ?? null;
 
     const nextSlide = () => {
         console.log(currentSlide);
@@ -41,6 +45,33 @@ const Slider = ({ data, title, icons, banner, number, type, id }) => {
         slider.style.transform = `translateX(-${(currentSlide * 100) / data.length}%)`;
     }, [currentSlide, data]);
 
+    const handleClick = (item) => {
+        const hasBasicPackage = item.packages.some(pkg => pkg.name === packageNotBanner);
+
+        if (hasBasicPackage) {
+            window.location.href = "/xem-phim/" + item.slug;
+            return;
+        }
+
+        if (!hasBasicPackage && !user) {
+            error("Vui lòng đăng nhập để xem phim này!");
+            return;
+        }
+
+        if (!hasBasicPackage && user) {
+            const hasAccess = item.packages.some(pkg =>
+                user.packages?.some(user_pkg => user_pkg.name === pkg.name)
+            );
+
+            if (hasAccess) {
+                window.location.href = "/xem-phim/" + item.slug;
+            } else {
+                error("Vui lòng nâng cấp gói để xem phim này!");
+            }
+        }
+    };
+
+
     return (
         <div className="relative">
             <div className="flex items-center justify-between mb-4">
@@ -56,8 +87,16 @@ const Slider = ({ data, title, icons, banner, number, type, id }) => {
                             className="relative h-72 bg-gray-300 rounded-md overflow-hidden cursor-pointer transform transition-transform duration-300 hover:scale-105"
                             key={index}
                             style={{ width: `${100 / itemsPerSlide}%` }}
+                            onClick={() => handleClick(item)}
                         >
-                            <Link to={item.packages[0].name === 'Basic' ? "/xem-phim/" + item.slug : localStorage.getItem('user') ? "/xem-phim/" + item.slug : "/login"}
+
+                            <img
+                                className="w-full h-4/5 object-cover object-center"
+                                src={item.poster_url.startsWith('http') ? item.poster_url : BASE_IMAGE_URL + item.poster_url}
+                                alt={item.name}
+                                title={item.name}
+                            />
+                            {/* <Link to={item.packages[0]?.name === 'Basic' ? "/xem-phim/" + item.slug : localStorage.getItem('user') ? "/xem-phim/" + item.slug : "/login"}
                                 onClick={() => {
                                     if (item.packages[0].name !== 'Basic' && !localStorage.getItem('user')) {
                                         error("Vui lòng đăng nhập để xem phim này!");
@@ -69,23 +108,31 @@ const Slider = ({ data, title, icons, banner, number, type, id }) => {
                                     alt={item.name}
                                     title={item.name}
                                 />
-                            </Link>
+                            </Link> */}
                             <div className="w-full h-1/5 p-2">
-                                <Link to={item.packages[0].name === 'Basic' ? "/xem-phim/" + item.slug : localStorage.getItem('user') ? "/xem-phim/" + item.slug : "/login"}
+                                <p className="hover:text-orange-600 hover:font-bold text-center line-clamp-2 overflow-ellipsis">{item.name}</p>
+                                {/* <Link to={item.packages[0]?.name === 'Basic' ? "/xem-phim/" + item.slug : localStorage.getItem('user') ? "/xem-phim/" + item.slug : "/login"}
                                     onClick={() => {
                                         if (item.packages[0].name !== 'Basic' && !localStorage.getItem('user')) {
                                             error("Vui lòng đăng nhập để xem phim này!");
                                         }
                                     }}>
                                     <p className="hover:text-orange-600 hover:font-bold text-center line-clamp-2 overflow-ellipsis">{item.name}</p>
-                                </Link>
+                                </Link> */}
                             </div>
-                            <div className={`absolute top-2 right-2 font-bold text-white bg-red-500 p-1 rounded-md ${!banner || item.packages[0].price == 0 ? 'hidden' : ''}`}>{item.packages[0].name ?? ""}</div>
-                            {index % 2 === 0 && icons && (
-                                <div className="absolute top-2 left-2 font-bold rounded-md p-1 bg-white">
-                                    <IoSparkles color="blue" className="text-2xl" />
-                                </div>
+                            {!item.packages.some(pkg => pkg.name === packageNotBanner) && (
+                                <>
+                                    {item.packages.some(pkg => pkg.name === package1) && (
+                                        <div className="absolute top-2 right-2 font-bold text-white bg-red-500 p-1 rounded-md">{package1}</div>
+                                    )}
+                                    {item.packages.some(pkg => pkg.name === package2) && (
+                                        <div className="absolute top-2 left-2 font-bold rounded-md p-1 bg-white">
+                                            <IoSparkles color="blue" className="text-2xl" />
+                                        </div>
+                                    )}
+                                </>
                             )}
+
                         </div>
                     )) :
                         data.map((item, index) => (
@@ -94,6 +141,7 @@ const Slider = ({ data, title, icons, banner, number, type, id }) => {
                                 key={index}
                                 style={{ width: `${100 / itemsPerSlide}%` }}
                                 title={item.name}
+                                onClick={() => handleClick(item)}
                             >
                                 <img
                                     className="w-full h-4/5 object-cover object-center"
@@ -104,12 +152,27 @@ const Slider = ({ data, title, icons, banner, number, type, id }) => {
                                 <div className="w-full h-1/5 px-2">
                                     <p className="hover:text-orange-600 hover:font-bold text-center line-clamp-2 overflow-ellipsis">{item.name}</p>
                                 </div>
-                                <Link to={'/xem-phim/' + item.slug}>
+                                <div className="w-full h-full flex items-center justify-center absolute top-0 left-0 bg-black bg-opacity-50 opacity-0 hover:opacity-40 transition-opacity duration-300">
+                                    <FontAwesomeIcon icon={faPlayCircle} className="text-4xl text-white active:text-orange-500" />
+                                </div>
+                                {/* <Link to={'/xem-phim/' + item.slug}>
                                     <div className="w-full h-full flex items-center justify-center absolute top-0 left-0 bg-black bg-opacity-50 opacity-0 hover:opacity-40 transition-opacity duration-300">
                                         <FontAwesomeIcon icon={faPlayCircle} className="text-4xl text-white active:text-orange-500" />
                                     </div>
-                                </Link>
-                                <div className={`absolute top-2 right-2 font-bold text-white bg-red-500 p-1 rounded-md ${!banner || item.packages[0].price == 0 ? 'hidden' : ''}`}>{item.packages[0].name ?? ""}</div>
+                                </Link> */}
+                                {!item.packages.some(pkg => pkg.name === packageNotBanner) && (
+                                    <>
+                                        {item.packages.some(pkg => pkg.name === package1) && (
+                                            <div className="absolute top-2 right-2 font-bold text-white bg-red-500 p-1 rounded-md">{package1}</div>
+                                        )}
+                                        {item.packages.some(pkg => pkg.name === package2) && (
+                                            <div className="absolute top-2 left-2 font-bold rounded-md p-1 bg-white">
+                                                <IoSparkles color="blue" className="text-2xl" />
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+
                             </div>
                         ))}
 

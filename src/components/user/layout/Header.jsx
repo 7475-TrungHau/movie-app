@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import logo from "@/assets/images/FPT-Play-Logo.jpg";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCaretDown, faSearch, faWallet, faCrown, faStar } from '@fortawesome/free-solid-svg-icons';
+import { faCaretDown, faSearch, faWallet, faCrown, faStar, faUserCircle } from '@fortawesome/free-solid-svg-icons';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useToast } from '@/context/ToastContext';
 import { getUserInfo } from '@/services/authService';
@@ -24,12 +24,13 @@ function Header() {
                 const token = localStorage.getItem('token');
                 console.log("Token: ", token);
                 setToken(token);
+                console.log("isLogin: ", isLogin);
 
                 if (token) {
                     try {
-
-
                         const res = await getUserInfo();
+
+
                         console.log("User info: ", res.data);
                         setUserInfo(res.data.user);
                         let user = {
@@ -37,17 +38,22 @@ function Header() {
                             fullname: res.data.user.fullname,
                             email: res.data.user.email,
                             id: res.data.user.id,
-                            package_name: res.data.user.package_name,
+                            packages: res.data.user.packages,
                         };
+                        console.log("isLogin ok: ", isLogin);
+
                         console.log("--------User: ", user);
 
                         localStorage.setItem('user', JSON.stringify(user));
                         setIsLogin(true);
                     } catch (error) {
-                        console.error("Lỗi khi lấy thông tin người dùng:", error);
-                        setIsLogin(false);
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('user');
+                        if (error.response && error.response.status === 401) {
+                            console.error("Lỗi khi lấy thông tin người dùng:", error);
+                            setIsLogin(false);
+                            localStorage.removeItem('user');
+                            localStorage.removeItem('token');
+                            setToken(null);
+                        }
                     }
                 } else {
                     setIsLogin(false);
@@ -55,6 +61,7 @@ function Header() {
                 }
             } catch (error) {
                 console.error("Lỗi khi lấy thông tin người dùng:", error);
+                localStorage.removeItem('user');
                 setIsLogin(false);
             }
         };
@@ -167,56 +174,61 @@ function Header() {
                     <Link to={`/search`} className="hover:text-orange-500 pt-1">
                         <FontAwesomeIcon icon={faSearch} className='hover:text-orange-500 text-xl cursor-pointer' />
                     </Link>
-                    {isLogin ? (
-                        <div className="flex items-center gap-2">
-                            <Link to={"/subscription"}>
-                                {userInfo.package_name && userInfo.package_name !== "Basic" ? (
-                                    <button type="button" className="text-white cursor-pointer bg-gradient-to-r from-green-500 via-green-700 to-green-400 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 font-bold text-md rounded-lg px-3 py-2 text-center mx-2">
-                                        <FontAwesomeIcon icon={userInfo.package_name === "VIP" ? faStar : faCrown} className='mr-2' />
-                                        {userInfo.package_name === "VIP" ? "VIP" : "PRO"}
-                                    </button>
-                                ) : (
-                                    <button type="button" className="text-white cursor-pointer bg-gradient-to-r from-orange-500 via-orange-700 to-orange-400 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-orange-300 dark:focus:ring-orange-800 font-bold text-md rounded-lg px-3 py-2 text-center mx-2">
-                                        <FontAwesomeIcon icon={faWallet} className='mr-2' />
-                                        Mua Gói
-                                    </button>
-                                )}
-                            </Link>
-                            <div className="relative flex items-center gap-1">
-                                <div className="w-8 h-8 rounded-xl bg-gray-700 px-1" id='openMenu' onClick={handleOpenMenu}
-                                    style={{ backgroundImage: `url(${userInfo.avatar ?? ""})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                    {isLogin
+                        ? (
+                            <div className="flex items-center gap-2">
+                                <Link to={"/subscription"}>
+                                    {userInfo && !userInfo.packages.includes("Basic") ? (
+                                        <button type="button" className="text-white cursor-pointer bg-gradient-to-r from-green-500 via-green-700 to-green-400 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 font-bold text-md rounded-lg px-3 py-2 text-center mx-2">
+                                            <FontAwesomeIcon icon={userInfo.package_name === "VIP" ? faStar : faCrown} className='mr-2' />
+                                            {userInfo.package_name === "VIP" ? "VIP" : "PRO"}
+                                        </button>
+                                    ) : (
+                                        <button type="button" className="text-white cursor-pointer bg-gradient-to-r from-orange-500 via-orange-700 to-orange-400 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-orange-300 dark:focus:ring-orange-800 font-bold text-md rounded-lg px-3 py-2 text-center mx-2">
+                                            <FontAwesomeIcon icon={faWallet} className='mr-2' />
+                                            Mua Gói
+                                        </button>
+                                    )}
+                                </Link>
+                                <div className="relative flex items-center gap-1">
+                                    <div className="w-8 h-8 rounded-xl bg-gray-700 px-1" id='openMenu' onClick={handleOpenMenu}
+                                        style={{ backgroundImage: `url(${userInfo.avatar ?? ""})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                                    </div>
+                                    <FontAwesomeIcon
+                                        id='openMenu1'
+                                        onClick={handleOpenMenu}
+                                        icon={faCaretDown}
+                                        className='hover:text-orange-500 text-xl cursor-pointer'
+                                    />
+                                    {openMenu && (
+                                        <ul className='absolute top-full right-0 w-[400%] bg-gray-800 text-white rounded-lg p-2 mt-2'>
+                                            <li>
+                                                <div className='my-1'>
+                                                    <p className='text-sm flex gap-2'>Xin chào <p className='text-sm font-bold'>{userInfo.username}</p></p>
+                                                    <p className='text-sm'>{userInfo.email}</p>
+                                                </div>
+                                            </li>
+                                            <li className='hover:text-orange-500 cursor-pointer'>Tài khoản của tôi</li>
+                                            <Link to="/login">
+                                                <li className='hover:text-orange-500 cursor-pointer'>Đăng nhập</li>
+                                            </Link>
+                                            <Link to={"/register"}>
+                                                <li className='hover:text-orange-500 cursor-pointer'>Đăng ký</li>
+                                            </Link>
+                                            <Link to="/profile" className="flex items-center space-x-2 hover:text-gray-300">
+                                                <FontAwesomeIcon icon={faUserCircle} className="h-6 w-6" />
+                                                <span>{userInfo.fullname}</span>
+                                            </Link>
+                                            <li className='hover:text-orange-500 cursor-pointer' onClick={logout}>Đăng xuất</li>
+                                        </ul>
+                                    )}
                                 </div>
-                                <FontAwesomeIcon
-                                    id='openMenu1'
-                                    onClick={handleOpenMenu}
-                                    icon={faCaretDown}
-                                    className='hover:text-orange-500 text-xl cursor-pointer'
-                                />
-                                {openMenu && (
-                                    <ul className='absolute top-full right-0 w-[400%] bg-gray-800 text-white rounded-lg p-2 mt-2'>
-                                        <li>
-                                            <div className='my-1'>
-                                                <p className='text-sm flex gap-2'>Xin chào <p className='text-sm font-bold'>{userInfo.username}</p></p>
-                                                <p className='text-sm'>{userInfo.email}</p>
-                                            </div>
-                                        </li>
-                                        <li className='hover:text-orange-500 cursor-pointer'>Tài khoản của tôi</li>
-                                        <Link to="/login">
-                                            <li className='hover:text-orange-500 cursor-pointer'>Đăng nhập</li>
-                                        </Link>
-                                        <Link to={"/register"}>
-                                            <li className='hover:text-orange-500 cursor-pointer'>Đăng ký</li>
-                                        </Link>
-                                        <li className='hover:text-orange-500 cursor-pointer' onClick={logout}>Đăng xuất</li>
-                                    </ul>
-                                )}
                             </div>
-                        </div>
-                    ) : (
-                        <Link to={"/login"} className="hover:text-orange-500 pt-1">
-                            <button type="button" className="text-white cursor-pointer bg-gradient-to-r from-orange-500 via-orange-700 to-orange-400 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-orange-300 dark:focus:ring-orange-800 font-bold text-md rounded-lg px-5 py-2 text-center">Login</button>
-                        </Link>
-                    )}
+                        ) : (
+                            <Link to={"/login"} className="hover:text-orange-500 pt-1">
+                                <button type="button" className="text-white cursor-pointer bg-gradient-to-r from-orange-500 via-orange-700 to-orange-400 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-orange-300 dark:focus:ring-orange-800 font-bold text-md rounded-lg px-5 py-2 text-center">Login</button>
+                            </Link>
+                        )}
                 </div>
             </div>
         </header>

@@ -24,10 +24,16 @@ export const setToken = (newToken) => {
     token = newToken;
     apiApp.defaults.headers['Authorization'] = token ? `Bearer ${token}` : null;
 }
+
+
 export const getApp = (url, params) => apiApp.get(url, { params });
 export const postApp = (url, data) => apiApp.post(url, data);
 export const get = (url, params) => api.get(url, { params });
-
+export const postFormData = (url, formData) => apiApp.post(url, formData, {
+    headers: {
+        'Content-Type': 'multipart/form-data',
+    },
+});
 export default api;
 
 

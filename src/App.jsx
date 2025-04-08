@@ -14,6 +14,8 @@ import "./App.css";
 import PaymentResult from "./components/user/payment/PaymentResult";
 import PlayMovie from "./pages/user/PlayMovie";
 import SubscriptionPlans from "./pages/user/SubscriptionPlans";
+import SearchTools from "./components/user/search/SearchTools";
+import ProfilePage from "./pages/user/ProfilePage";
 
 function App() {
   return (
@@ -33,6 +35,8 @@ function App() {
             <Route path="/subscription" element={<SubscriptionPlans />} />
             <Route path="/payment-success" element={<PaymentResult />} />
             <Route path="/payment-failed" element={<PaymentResult />} />
+            <Route path="/search" element={<SearchTools />} />
+            <Route path="/profile" element={<ProfilePage />} />
           </Routes>
         </div>
         <Footer />

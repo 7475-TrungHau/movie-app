@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getApp, postApp } from "./api";
+import { getApp, postApp, postFormData } from "./api";
 
 
 
@@ -9,3 +9,5 @@ export const loginUser = async (data) => postApp('/login', data);
 
 export const getUserInfo = async () => getApp('/user');
 export const getUserProfileData = async (typeData) => getApp('/user/' + typeData);
+export const updateProfile = (formData) => postFormData('/user/update', formData);
+export const changePassword = async (data) => postApp('/user/change-password', data);
