@@ -37,23 +37,7 @@ const EpisodeSlider = ({ episodes, title, number, id }) => {
         return <div className="text-white">Không có tập phim nào.</div>;
     }
 
-    const handleClick = (item) => {
-        if (!item.packages.includes(packageNotBanner) && user == null) {
-            error("Vui lòng đăng nhập để xem phim này!");
-            return;
-        }
-        if (item.packages.includes(packageNotBanner) || item.packages.isEmpty) {
-            window.location.href = "/xem-phim/" + item.slug;
-        }
-        if (!item.packages.includes(packageNotBanner) && user != null) {
-            if (item.packages.some(packageName => user.packages.includes(packageName))) {
-                window.location.href = "/xem-phim/" + item.slug;
-            }
-            else {
-                error("Vui lòng nâng cấp gói để xem phim này!");
-            }
-        }
-    }
+   
 
     return (
         <div className="relative">

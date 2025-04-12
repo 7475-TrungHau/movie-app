@@ -228,8 +228,8 @@ function PlayMovie() {
 
             <br />
             {moviesSlider && (
-                <div className="container mx-auto mt-10">
-                    <Slider data={moviesSlider} title={"Anime Nhật Bản"} />
+                <div className="container mx-auto mt-10 mb-15">
+                    <Slider data={moviesSlider} title={"Phim liên quan"} />
                 </div>
             )}
 

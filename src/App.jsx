@@ -16,6 +16,7 @@ import PlayMovie from "./pages/user/PlayMovie";
 import SubscriptionPlans from "./pages/user/SubscriptionPlans";
 import SearchTools from "./components/user/search/SearchTools";
 import ProfilePage from "./pages/user/ProfilePage";
+import ForgetPassword from "./pages/user/ForgotPassword";
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
             <Route path="/payment-failed" element={<PaymentResult />} />
             <Route path="/search" element={<SearchTools />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/forgot-password" element={<ForgetPassword />} />
           </Routes>
         </div>
         <Footer />
