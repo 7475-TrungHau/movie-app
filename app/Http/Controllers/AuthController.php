@@ -122,25 +122,46 @@ class AuthController extends Controller
         }
     }
 
-    public function resetPassword(Request $request)
+    public function verifyCode(Request $request)
     {
         try {
             $request->validate([
                 'email' => 'required|email|string',
                 'token' => 'required|string',
-                'password' => 'required|string|min:6',
             ]);
 
             $reset = DB::table('password_reset_tokens')->where('email', $request->email)
                 ->where('token', $request->token)->first();
 
-            if (!$reset || Carbon::parse($reset->created_at)->diffInMinutes(now()) > 5) {
+            if (!$reset || Carbon::parse($reset->created_at)->diffInMinutes(now()) > 10) {
+                return response()->json(['error' => 'Invalid or expired token'], 400);
+            }
+
+            return response()->json(['message' => 'Token is valid']);
+        } catch (\Throwable $th) {
+            return response()->json(['error' => $th->getMessage()], 500);
+        }
+    }
+
+    public function resetPassword(Request $request)
+    {
+        try {
+            $request->validate([
+                'email' => 'required|email|string',
+                'token' => 'required',
+                'newPassword' => 'required|string|min:6',
+            ]);
+
+            $reset = DB::table('password_reset_tokens')->where('email', $request->email)
+                ->where('token', $request->token)->first();
+
+            if (!$reset || Carbon::parse($reset->created_at)->diffInMinutes(now()) > 10) {
                 return response()->json(['error' => 'Invalid or expired token'], 400);
             }
 
             $user = User::where('email', $request->email)->first();
             if ($user) {
-                $user->update(['password' => Hash::make($request->password)]);
+                $user->update(['password' => Hash::make($request->newPassword)]);
                 DB::table('password_reset_tokens')->where('email', $request->email)->delete();
                 return response()->json(['message' => 'password reset successfully']);
             }

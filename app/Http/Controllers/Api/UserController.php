@@ -20,6 +20,9 @@ class UserController extends Controller
             //     ->with(['package'])
             //     ->first();
 
+
+           
+
             $activeSubscriptions = $user->subscriptions()
                 ->where('end_date', '>=', now())
                 ->where('status', 'active')
