@@ -19,7 +19,14 @@ Route::middleware('auth.jwt')->group(function () {
     Route::get('/user', [UserController::class, 'getUser'])->name('user');
     Route::get('/user/ratings/{movieId}', [UserController::class, 'getRatingByMovie'])->name('user.rating.movie');
     Route::get('/user/favorites/{movieId}', [UserController::class, 'getFavoriteMovies'])->name('user.favorites.movie');
+    Route::get('/user/favorites', [UserController::class, 'getFavorites'])->name('user.favorites');
     Route::post('/user/update', [UserController::class, 'update'])->name('user.update');
+
+    // History routes
+    Route::get('/user/histories', [UserController::class, 'getHistory'])->name('user.histories');
+    Route::post('/user/histories/{episodeId}', [UserController::class, 'updateHistory'])->name('user.history.update');
+    Route::delete('/user/histories/{episodeId?}', [UserController::class, 'deleteHistory'])->name('user.history.delete');
+
     // Movie   (đánh giá, lịch sử xem)
     Route::post('/movies/{movieId}/rating', [MovieController::class, 'Rating'])->name('movie.rating');
     Route::post('/movies/{movieId}/favorite', [MovieController::class, 'Favorite'])->name('movie.favorite');

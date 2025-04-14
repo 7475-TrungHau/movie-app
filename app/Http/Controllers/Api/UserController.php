@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Favorite;
 use App\Models\Subscription;
+use App\Models\History;
+use App\Models\Episode;
 use Exception;
 use Illuminate\Http\Request;
 use PHPUnit\Event\Subscriber;
@@ -20,9 +22,6 @@ class UserController extends Controller
             //     ->where('end_date', '>=', now())
             //     ->with(['package'])
             //     ->first();
-
-
-
 
             $activeSubscriptions = $user->subscriptions()
                 ->where('end_date', '>=', now())
@@ -194,6 +193,152 @@ class UserController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'error' => 'Có lỗi xảy ra: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getFavorites(Request $request)
+    {
+        try {
+            $user = $request->attributes->get('author_user');
+            if (!$user) {
+                return response()->json(['message' => 'Xác thực user thất bại'], 401);
+            }
+
+            $perPage = $request->input('per_page', 10); // Default 10 items per page
+
+            $favorites = Favorite::where('user_id', $user->id)
+                ->with(['movie:id,name,thumbnail_url,slug'])
+                ->paginate($perPage);
+
+            if ($favorites->isEmpty()) {
+                return response()->json(['message' => 'Không tìm thấy phim yêu thích'], 404);
+            }
+
+            return response()->json([
+                'favorites' => $favorites,
+                'message' => 'Lấy danh sách phim yêu thích thành công'
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'error' => $th->getMessage(),
+                'message' => 'Có lỗi xảy ra khi lấy danh sách phim yêu thích'
+            ], 500);
+        }
+    }
+
+    public function getHistory(Request $request)
+    {
+        try {
+            $user = $request->attributes->get('author_user');
+            if (!$user) {
+                return response()->json(['message' => 'Xác thực user thất bại'], 401);
+            }
+
+            $perPage = $request->input('per_page', 10);
+            $movieId = $request->input('movie_id');
+
+            $query = History::where('user_id', $user->id);
+
+            // If movie_id is provided, filter episodes by that movie
+            if ($movieId) {
+                $query->whereHas('episode', function ($query) use ($movieId) {
+                    $query->where('movie_id', $movieId);
+                });
+            }
+
+            $histories = $query
+                ->with(['episode:id,episode_number,title,thumbnail_url,movie_id', 'episode.movie:id,name,slug,thumbnail_url'])
+                ->orderBy('last_watched_at', 'desc')
+                ->paginate($perPage);
+
+            if ($histories->isEmpty()) {
+                return response()->json(['message' => 'Không tìm thấy lịch sử xem phim'], 404);
+            }
+
+            return response()->json([
+                'histories' => $histories,
+                'message' => 'Lấy danh sách lịch sử xem phim thành công'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'message' => 'Có lỗi xảy ra khi lấy lịch sử xem phim'
+            ], 500);
+        }
+    }
+
+    public function updateHistory(Request $request, $episodeId)
+    {
+        try {
+            $user = $request->attributes->get('author_user');
+            if (!$user) {
+                return response()->json(['message' => 'Xác thực user thất bại'], 401);
+            }
+
+            $episode = Episode::find($episodeId);
+            if (!$episode) {
+                return response()->json(['message' => 'Không tìm thấy tập phim'], 404);
+            }
+
+            $validatedData = $request->validate([
+                'progress' => 'required|integer|min:0|max:100',
+            ]);
+
+            $history = History::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'episode_id' => $episodeId,
+                ],
+                [
+                    'progress' => $validatedData['progress'],
+                    'last_watched_at' => now(),
+                ]
+            );
+
+            return response()->json([
+                'message' => 'Cập nhật lịch sử xem phim thành công',
+                'history' => $history
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'message' => 'Có lỗi xảy ra khi cập nhật lịch sử xem phim'
+            ], 500);
+        }
+    }
+
+    public function deleteHistory(Request $request, $episodeId = null)
+    {
+        try {
+            $user = $request->attributes->get('author_user');
+            if (!$user) {
+                return response()->json(['message' => 'Xác thực user thất bại'], 401);
+            }
+
+            $query = History::where('user_id', $user->id);
+
+            if ($episodeId) {
+                // Xóa lịch sử cho một tập phim cụ thể
+                $query->where('episode_id', $episodeId);
+            }
+
+            $deleted = $query->delete();
+
+            if ($deleted == 0) {
+                return response()->json(['message' => 'Không tìm thấy lịch sử để xóa'], 404);
+            }
+
+            return response()->json([
+                'message' => $episodeId ? 'Xóa lịch sử xem tập phim thành công' : 'Xóa toàn bộ lịch sử xem phim thành công',
+                'deleted_count' => $deleted
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'message' => 'Có lỗi xảy ra khi xóa lịch sử xem phim'
             ], 500);
         }
     }
