@@ -37,7 +37,7 @@ const EpisodeSlider = ({ episodes, title, number, id }) => {
         return <div className="text-white">Không có tập phim nào.</div>;
     }
 
-   
+
 
     return (
         <div className="relative">

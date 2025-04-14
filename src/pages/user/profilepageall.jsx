@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faTicketAlt, faHistory, faHeart, faCog } from '@fortawesome/free-solid-svg-icons';
-import { getUserInfo, updateProfile, changePassword, getUserInfoWithData } from '@services/authService';
-import { postFavoriteMovie } from '@services/apiService';
+import {
+    faUser,
+    faTicketAlt,
+    faHistory,
+    faHeart,
+    faCog
+} from '@fortawesome/free-solid-svg-icons';
+import { getUserInfo, updateProfile, changePassword } from '@services/authService';
 import { useToast } from '@context/ToastContext';
-import axios from 'axios';
 
 // Import tab components
 import ProfileTab from '@components/user/profile/ProfileTab';
@@ -14,8 +18,8 @@ import HistoryTab from '@components/user/profile/HistoryTab';
 import FavoritesTab from '@components/user/profile/FavoritesTab';
 import SettingsTab from '@components/user/profile/SettingsTab';
 
-// Import mock data for history (replace with API calls later)
-import { viewingHistory } from '@components/user/profile/mockData';
+// Import mock data (replace with API calls later)
+import { viewingHistory, favorites } from '@components/user/profile/mockData';
 
 function ProfilePage() {
     const [user, setUser] = useState(null);
@@ -27,18 +31,8 @@ function ProfilePage() {
         new_password: '',
         new_password_confirmation: ''
     });
-
-    // State for favorites
-    const [favorites, setFavorites] = useState(null);
-    const [favoritesLoading, setFavoritesLoading] = useState(false);
-    const [favoritesPage, setFavoritesPage] = useState(1);
-    const [favoritesTotalPages, setFavoritesTotalPages] = useState(1);
-
-    const { success, error, warning } = useToast();
+    const { success, error } = useToast();
     const navigate = useNavigate();
-
-    console.log("log favorites: ", favorites);
-
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -52,66 +46,11 @@ function ProfilePage() {
                     email: res.data.user.email
                 });
             } catch (err) {
-                if (err.response?.status === 401) {
-                    warning('Token đã hết hạn, vui lòng đăng nhập lại');
-                    navigate('/login');
-                } else {
-                    error('Lỗi tải thông tin người dùng');
-                }
-
+                error('Lỗi tải thông tin người dùng');
             }
         };
         fetchUser();
     }, []);
-
-    // Fetch favorites when tab changes to favorites or page changes
-    useEffect(() => {
-        if (activeTab === 'favorites') {
-            fetchFavorites(favoritesPage);
-        }
-    }, [activeTab, favoritesPage]);
-
-    const fetchFavorites = async (page = 1) => {
-        setFavoritesLoading(true);
-        try {
-            const response = await getUserInfoWithData('favorites', {
-                params: {
-                    page: page
-
-                }
-            });
-            setFavorites(response.data.favorites);
-            setFavoritesTotalPages(response.data.favorites.last_page);
-            setFavoritesLoading(false);
-        } catch (err) {
-            error(err.response?.data?.message || 'Lỗi khi tải danh sách phim yêu thích');
-            setFavoritesLoading(false);
-        }
-    };
-
-    const handleChangeFavoritesPage = (page) => {
-        setFavoritesPage(page);
-    };
-
-    const handleRemoveFavorite = async (favoriteId) => {
-        const user = JSON.parse(localStorage.getItem("user"));
-        if (!user) {
-            errorToast("Bạn cần đăng nhập để thêm phim vào danh sách yêu thích!", 3000);
-            return;
-        }
-        try {
-            const res = await postFavoriteMovie(favoriteId);
-            if (res.data.action === "remove") {
-                const updatedFavorites = favorites.data.filter(favorite => favorite.movie_id !== favoriteId);
-                console.log("log updatedFavorites: ", updatedFavorites);
-
-                setFavorites(updatedFavorites);
-                success("Xóa phim khỏi danh sách yêu thích thành công");
-            }
-        } catch (error) {
-            console.error("Error adding to favorites: ", error);
-        }
-    };
 
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
@@ -253,14 +192,7 @@ function ProfilePage() {
                             <HistoryTab viewingHistory={viewingHistory} />
                         )}
                         {activeTab === 'favorites' && (
-                            <FavoritesTab
-                                favorites={favorites}
-                                loading={favoritesLoading}
-                                currentPage={favoritesPage}
-                                totalPages={favoritesTotalPages}
-                                onPageChange={handleChangeFavoritesPage}
-                                onRemoveFavorite={handleRemoveFavorite}
-                            />
+                            <FavoritesTab favorites={favorites} />
                         )}
                         {activeTab === 'settings' && (
                             <SettingsTab
