@@ -17,6 +17,7 @@ import SubscriptionPlans from "./pages/user/SubscriptionPlans";
 import SearchTools from "./components/user/search/SearchTools";
 import ProfilePage from "./pages/user/ProfilePage";
 import ForgetPassword from "./pages/user/ForgotPassword";
+import Error from "./pages/user/Error";
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
             <Route path="/search" element={<SearchTools />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/forgot-password" element={<ForgetPassword />} />
+            <Route path="/error" element={<Error />} />
           </Routes>
         </div>
         <Footer />

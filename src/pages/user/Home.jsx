@@ -20,8 +20,9 @@ function Home() {
     useEffect(() => {
         const fetchBannerMovies = async () => {
             try {
-                const res = await getMovies({ limit: 10, sort_by: "created_at", sort_dir: "desc" });
-                console.log(res.data);
+                const user = localStorage.getItem("user");
+                const res = await getMovies({ limit: 10, sort_by: "created_at", sort_dir: "desc", id: user ? JSON.parse(user).id : "" });
+                console.log("Banner: " + res.data);
                 setBannerMovies(res.data);
             } catch (error) {
                 console.log("Loi lay movie: " + error);

@@ -5,13 +5,15 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import FavoriteHeart from '@components/common/Button/FavoriteHeart';
 import { extractCountryFromGenres } from '../../utils/stringUtils';
 import { useToast } from '../../context/ToastContext';
+import { postFavoriteMovie } from '../../services/apiService';
+
 
 const Banner = ({ data, imgUrlBase }) => {
     const [movies, setMovies] = useState([]);
     const [currentSlide, setCurrentSlide] = useState(0);
     const [favorite, setFavorite] = useState(false);
     const [isLogin, setIsLogin] = useState(true);
-    const { error } = useToast();
+    const { error, success } = useToast();
     const packageNotBanner = "Basic"; // Gói không có banner
     const package1 = "VIP";
     const package2 = "PRO";
@@ -34,20 +36,22 @@ const Banner = ({ data, imgUrlBase }) => {
     useEffect(() => {
         const fetchMovies = () => {
             setMovies(data);
+            setFavorite(data[0]?.is_favorite === 1 ? true : false);
         }
         fetchMovies();
     }, [data]);
 
 
     useEffect(() => {
-
+        setFavorite(data[currentSlide]?.is_favorite === 1 ? true : false);
         const intervalId = setInterval(() => {
+            const nextSlide = (currentSlide + 1) % movies.length;
             setCurrentSlide((prevSlide) => (prevSlide + 1) % movies.length);
+
         }, 5000);
-
-
         return () => clearInterval(intervalId);
     }, [currentSlide, movies.length]);
+
     if (movies.length === 0) {
         return (
             <div className="banner container w-full bg-slate-300 mt-20" style={{ height: `calc(100vh - 80px)` }}>
@@ -58,8 +62,33 @@ const Banner = ({ data, imgUrlBase }) => {
         );
     }
 
-    const handleSetFavorite = () => {
-        setFavorite(!favorite);
+    // useEffect(() => {
+    //    
+    // }, [currentSlide])
+
+    const handleSetFavorite = async () => {
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user == null) {
+                error("Vui lòng đăng nhập để thêm phim vào danh sách yêu thích!");
+                return;
+            } else {
+                const res = await postFavoriteMovie(movies[currentSlide].id);
+                if (res.data.action === "add") {
+                    setFavorite(true);
+                    success("Thêm phim vào danh sách yêu thích thành công!")
+                    data[currentSlide].is_favorite = 1;
+                    setMovies(data);
+                } else {
+                    setFavorite(false);
+                    success("Xóa phim khỏi danh sách yêu thích thành công!");
+                    data[currentSlide].is_favorite = 0;
+                    setMovies(data);
+                }
+            }
+        } catch (error) {
+            console.log("Loi set favorite: ", error);
+        }
     }
     const handleClick = (item) => {
         if (!item.packages.some(pkg => pkg.name === packageNotBanner) && user == null) {

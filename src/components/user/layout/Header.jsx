@@ -39,6 +39,7 @@ function Header() {
                             email: res.data.user.email,
                             id: res.data.user.id,
                             packages: res.data.user.packages,
+                            package_name: res.data.user.packages.length > 0 ? res.data.user.packages[0].name : "Basic",
                         };
                         console.log("isLogin ok: ", isLogin);
 
@@ -181,7 +182,7 @@ function Header() {
                                     {userInfo && !userInfo.packages.includes("Basic") ? (
                                         <button type="button" className="text-white cursor-pointer bg-gradient-to-r from-green-500 via-green-700 to-green-400 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 font-bold text-md rounded-lg px-3 py-2 text-center mx-2">
                                             <FontAwesomeIcon icon={userInfo.package_name === "VIP" ? faStar : faCrown} className='mr-2' />
-                                            {userInfo.package_name === "VIP" ? "VIP" : "PRO"}
+                                            {userInfo.packages[0].name == "VIP" ? "VIP" : "PRO"}
                                         </button>
                                     ) : (
                                         <button type="button" className="text-white cursor-pointer bg-gradient-to-r from-orange-500 via-orange-700 to-orange-400 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-orange-300 dark:focus:ring-orange-800 font-bold text-md rounded-lg px-3 py-2 text-center mx-2">
@@ -201,25 +202,35 @@ function Header() {
                                         className='hover:text-orange-500 text-xl cursor-pointer'
                                     />
                                     {openMenu && (
-                                        <ul className='absolute top-full right-0 w-[400%] bg-gray-800 text-white rounded-lg p-2 mt-2'>
-                                            <li>
-                                                <div className='my-1'>
-                                                    <p className='text-sm flex gap-2'>Xin chào <p className='text-sm font-bold'>{userInfo.username}</p></p>
-                                                    <p className='text-sm'>{userInfo.email}</p>
+                                        <ul className='absolute top-full right-0 w-[400%] bg-gray-800 text-white rounded-lg p-4 mt-2 shadow-lg divide-y divide-gray-700'>
+                                            <li className='pb-3'>
+                                                <div className='space-y-1'>
+                                                    <div className='flex items-center gap-2 text-sm'>
+                                                        <span>Xin chào</span>
+                                                        <span className='font-bold text-orange-400'>{userInfo.username}</span>
+                                                    </div>
+                                                    <p className='text-sm text-gray-400'>{userInfo.email}</p>
                                                 </div>
                                             </li>
-                                            <li className='hover:text-orange-500 cursor-pointer'>Tài khoản của tôi</li>
-                                            <Link to="/login">
-                                                <li className='hover:text-orange-500 cursor-pointer'>Đăng nhập</li>
-                                            </Link>
-                                            <Link to={"/register"}>
-                                                <li className='hover:text-orange-500 cursor-pointer'>Đăng ký</li>
-                                            </Link>
-                                            <Link to="/profile" className="flex items-center space-x-2 hover:text-gray-300">
-                                                <FontAwesomeIcon icon={faUserCircle} className="h-6 w-6" />
-                                                <span>{userInfo.fullname}</span>
-                                            </Link>
-                                            <li className='hover:text-orange-500 cursor-pointer' onClick={logout}>Đăng xuất</li>
+
+                                            <li className='py-3'>
+                                                <Link
+                                                    to="/profile"
+                                                    className="flex items-center gap-3 hover:text-orange-400 transition-colors duration-200"
+                                                >
+                                                    <FontAwesomeIcon icon={faUserCircle} className="h-5 w-5" />
+                                                    <span>Tài khoản của tôi</span>
+                                                </Link>
+                                            </li>
+
+                                            <li className='pt-3'>
+                                                <button
+                                                    onClick={logout}
+                                                    className='w-full text-left hover:text-orange-400 transition-colors duration-200'
+                                                >
+                                                    Đăng xuất
+                                                </button>
+                                            </li>
                                         </ul>
                                     )}
                                 </div>

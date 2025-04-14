@@ -6,8 +6,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import TruncatedText from "@components/common/TruncatedText";
 import FavoriteHeart from "@components/common/Button/FavoriteHeart";
 import Slider from "@components/user/Slider/Slider";
-import { useParams, Link } from "react-router-dom";
-import { getMovie, getMovies, postRateMovie } from "@/Services/apiService";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { getMovie, getMovies, postRateMovie, postFavoriteMovie } from "@/Services/apiService";
 import { getUserProfileData } from "../../services/authService";
 import { extractCountryFromGenres } from "../../utils/stringUtils";
 import EpisodeSlider from "@components/user/Slider/EpisodeSlider";
@@ -29,6 +29,7 @@ function PlayMovie() {
     const [time, setTime] = useState(0);
     const [onLoad, setOnLoad] = useState(false);
     const { success, error: errorToast } = useToast();
+    const navigate = useNavigate();
 
     const { slug, tap } = useParams();
 
@@ -42,8 +43,9 @@ function PlayMovie() {
             try {
                 const ep = tap ? tap : 'tap-01';
                 console.log("Tap: ", tap);
+                const user = localStorage.getItem("user");
+                const res = await getMovie(slug, { id: user ? JSON.parse(user).id : "" });
 
-                const res = await getMovie(slug);
                 console.log("movie: ", res.data);
                 console.log("movie ep: ", res.data.episodes);
                 setMovie(res.data);
@@ -53,6 +55,10 @@ function PlayMovie() {
 
             } catch (error) {
                 console.log("Loi lay movie : " + error);
+                if (error.response && error.response.status === 403) {
+                    console.log("Loi lay movie : " + error);
+                    navigate("/error");
+                }
             }
         };
         const fetchAnimeJapan = async () => {
@@ -80,8 +86,19 @@ function PlayMovie() {
                 console.error("Loi lay rating: ", error);
             }
         };
+        const fetchUserFavorite = async () => {
+            if (!movie?.id) return;
+            try {
+                const res = await getUserProfileData(`favorites/${movie.id}`);
+                console.log(res.data.message + "User favorite: ", res.data);
+                setIsFavorite(res.data.is_favorite === 1 ? true : false);
+            } catch (error) {
+                console.error("Loi lay favorite: ", error);
+            }
+        }
         if (localStorage.getItem("token") && movie?.id) {
             fetchUserRating();
+            fetchUserFavorite();
         }
     }, [movie?.id, localStorage.getItem("token")])
 
@@ -117,8 +134,26 @@ function PlayMovie() {
 
     };
 
-    const handleFavorite = () => {
-        setIsFavorite(!isFavorite);
+    const handleFavorite = async () => {
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user) {
+            errorToast("Bạn cần đăng nhập để thêm phim vào danh sách yêu thích!", 3000);
+            return;
+        }
+        try {
+            const res = await postFavoriteMovie(movie.id);
+            if (res.data.action === "add") {
+                setIsFavorite(true);
+                success("Thêm phim vào danh sách yêu thích thành công!")
+
+            } else {
+                setIsFavorite(false);
+                success("Xóa phim khỏi danh sách yêu thích thành công!");
+
+            }
+        } catch (error) {
+            console.error("Error adding to favorites: ", error);
+        }
     };
 
     const getTimes = (time) => {
