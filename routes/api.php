@@ -18,9 +18,11 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('
 Route::middleware('auth.jwt')->group(function () {
     Route::get('/user', [UserController::class, 'getUser'])->name('user');
     Route::get('/user/ratings/{movieId}', [UserController::class, 'getRatingByMovie'])->name('user.rating.movie');
+    Route::get('/user/favorites/{movieId}', [UserController::class, 'getFavoriteMovies'])->name('user.favorites.movie');
     Route::post('/user/update', [UserController::class, 'update'])->name('user.update');
     // Movie   (đánh giá, lịch sử xem)
     Route::post('/movies/{movieId}/rating', [MovieController::class, 'Rating'])->name('movie.rating');
+    Route::post('/movies/{movieId}/favorite', [MovieController::class, 'Favorite'])->name('movie.favorite');
     Route::post('/episodes/{episodeId}/history', [MovieController::class, 'setHistory'])->name('episode.history');
     Route::get('/payment/vnpay/{package_id}', [PaymentController::class, 'createVnpayPayment'])->name('payment.vnpay');
 

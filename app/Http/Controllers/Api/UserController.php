@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Favorite;
 use App\Models\Subscription;
 use Exception;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ class UserController extends Controller
             //     ->first();
 
 
-           
+
 
             $activeSubscriptions = $user->subscriptions()
                 ->where('end_date', '>=', now())
@@ -167,6 +168,33 @@ class UserController extends Controller
             // Log the error for debugging
             Log::error('User update failed: ' . $e->getMessage());
             return response()->json(['message' => 'Cập nhật thất bại: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function getFavoriteMovies(Request $request, $movieId)
+    {
+        try {
+            $user = $request->attributes->get('author_user');
+            if (!$user) {
+                return response()->json(['message' => 'Xác thực user thất bại'], 401);
+            }
+            $favorite = Favorite::where('user_id', $user->id)
+                ->where('movie_id', $movieId)
+                ->first();
+            if (!$favorite) {
+                return response()->json([
+                    'message' => 'Không tìm thấy phim yêu thích',
+                    'is_favorite' => 0
+                ], 404);
+            }
+            return response()->json([
+                'is_favorite' => 1,
+                'message' => 'Lấy thông tin phim yêu thích thành công'
+            ])->setStatusCode(200);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'Có lỗi xảy ra: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

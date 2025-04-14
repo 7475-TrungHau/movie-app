@@ -12,6 +12,7 @@ class Favorite extends Model
         'added_at'
     ];
 
+    public $timestamps = false;
     protected $primaryKey = ['user_id', 'movie_id'];
     public $incrementing = false;
 

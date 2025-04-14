@@ -9,8 +9,10 @@ use App\Models\Movie;
 use App\Models\Rating;
 use App\Models\Category;
 use App\Models\Episode;
+use App\Models\Favorite;
 use App\Models\MovieCategory;
 use App\Models\Package;
+use App\Models\Subscription;
 use Illuminate\Support\Facades\Log;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -32,6 +34,7 @@ class MovieController extends Controller
                 $q->where('slug', $slug);
             });
         }
+
         if ($request->has('genre')) {
             $genreSlug = $request->input('genre');
             $query->whereRaw("REPLACE(LOWER(CONVERT(genres USING utf8mb4)), ' ', '-') LIKE ?", ['%' . $genreSlug . '%']);
@@ -47,7 +50,19 @@ class MovieController extends Controller
             $query->orderBy('created_at', 'desc');
         }
 
+        // Thêm trường is_favorite vào query nếu có user id
+        if ($request->has('id')) {
+            $userId = $request->input('id');
 
+            $query->addSelect(['is_favorite' => function ($subquery) use ($userId) {
+                $subquery->selectRaw('COUNT(*) > 0')
+                    ->from('favorites')
+                    ->whereColumn('favorites.movie_id', 'movies.id')
+                    ->where('favorites.user_id', $userId);
+            }]);
+        }
+
+        // Xử lý limit hoặc pagination
         if ($request->has('limit') && is_numeric($request->input('limit'))) {
             $limit = (int) $request->input('limit');
             $movies = $query->limit($limit)->get();
@@ -58,8 +73,11 @@ class MovieController extends Controller
             }
             $movies = $query->paginate((int)$perPage);
         }
+
+        // Load packages
         $movies->load(['packages' => function ($query) {
-            $query->select('packages.id', 'packages.name', 'packages.price')->where('packages.is_active', 1);
+            $query->select('packages.id', 'packages.name', 'packages.price')
+                ->where('packages.is_active', 1);
         }]);
 
         return response()->json($movies);
@@ -67,26 +85,61 @@ class MovieController extends Controller
 
     public function show(Request $request, $identifier)
     {
-        $query = Movie::with('category')->withCount('episodes')->withCount('ratings');
-        $query->with(['episodes' => function ($q) {
-            $q->orderBy('episode_number', 'asc');
-        }]);
-        if (is_numeric($identifier)) {
-            $movie = $query->find($identifier);
-            if ($movie) {
-                $movie->increment('view');
+        try {
+            // Fetch the movie first
+            $query = Movie::with('category')->withCount('episodes')->withCount('ratings');
+            $query->with(['episodes' => function ($q) {
+                $q->orderBy('episode_number', 'asc');
+            }]);
+
+            if (is_numeric($identifier)) {
+                $movie = $query->find($identifier);
+            } else {
+                $movie = $query->where('slug', $identifier)->first();
             }
-        } else {
-            $movie = $query->where('slug', $identifier)->first();
-        }
 
-        if (!$movie) {
-            return response()->json(['message' => 'Movie not found'], 404);
-        }
-        $movie->view = $movie->view + 1;
-        $movie->save();
+            if (!$movie) {
+                return response()->json(['message' => 'Movie not found'], 404);
+            }
 
-        return response()->json($movie);
+            if ($request->has('id') && $request->input('id') !== null) {
+                $userId = $request->input('id');
+                $sub = Subscription::where('user_id', $userId)
+                    ->where('status', 'active')
+                    ->where('end_date', '>=', now())
+                    ->first();
+
+                if (!$sub) {
+                    return response()->json(['message' => 'Active subscription required or subscription invalid/expired.'], 403); // Use 403 Forbidden
+                }
+
+                $package = $sub->package()->with('movies:id')->first();
+
+
+                if (!$package || !$package->movies->contains($movie->id)) {
+                    return response()->json(['message' => 'This movie is not included in your current subscription package.'], 403); // Use 403 Forbidden
+                }
+            } else {
+
+                $moviePackages = $movie->packages()->get();
+
+
+                $hasBasicPackage = $moviePackages->contains(function ($package) {
+                    return strtolower($package->name) === 'basic';
+                });
+
+                if (!$hasBasicPackage) {
+                    return response()->json(['message' => 'This movie requires a premium subscription'], 403);
+                }
+            }
+
+            $movie->increment('view');
+
+            return response()->json($movie);
+        } catch (Exception $e) {
+            Log::error("Error in MovieController@show: " . $e->getMessage());
+            return response()->json(['error' => 'An unexpected error occurred.', 'message' => 'Có lỗi xảy ra'], 500);
+        }
     }
 
     public function getEpisodes(Request $request, $movieId)
@@ -147,6 +200,37 @@ class MovieController extends Controller
             ]);
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage(), 'message' => 'Có lỗi xảy ra'], 500);
+        }
+    }
+
+    public function Favorite($movieId)
+    {
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+            if (!$user) {
+                return response()->json(['message' => 'User authentication failed'], 401);
+            }
+
+            $movie = Movie::find($movieId);
+            if (!$movie) {
+                return response()->json(['message' => 'Movie not found'], 404);
+            }
+
+            $favorite = Favorite::where('user_id', $user->id)
+                ->where('movie_id', $movieId)
+                ->first();
+
+            if ($favorite) {
+                Favorite::where('user_id', $user->id)
+                    ->where('movie_id', $movieId)
+                    ->delete();
+                return response()->json(['message' => 'Removed from favorites', 'action' => 'remove']);
+            } else {
+                $user->favorites()->create(['movie_id' => $movieId, 'added_at' => now()]);
+                return response()->json(['message' => 'Added to favorites', 'action' => 'add']);
+            }
+        } catch (Exception $th) {
+            return response()->json(['error' => $th->getMessage(), 'message' => 'An error occurred'], 500);
         }
     }
 
