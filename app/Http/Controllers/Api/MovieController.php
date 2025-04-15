@@ -13,6 +13,7 @@ use App\Models\Favorite;
 use App\Models\MovieCategory;
 use App\Models\Package;
 use App\Models\Subscription;
+use App\Models\History;
 use Illuminate\Support\Facades\Log;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -87,10 +88,27 @@ class MovieController extends Controller
     {
         try {
             // Fetch the movie first
-            $query = Movie::with('category')->withCount('episodes')->withCount('ratings');
-            $query->with(['episodes' => function ($q) {
-                $q->orderBy('episode_number', 'asc');
-            }]);
+            if ($request->has('id')) {
+                $userId = $request->input('id');
+                $query = Movie::with('category')->withCount('episodes')->withCount('ratings');
+
+                // Thêm thông tin progress từ history cho từng episode
+                $query->with(['episodes' => function ($q) use ($userId) {
+                    $q->orderBy('episode_number', 'asc')
+                        ->addSelect(['progress' => function ($subquery) use ($userId) {
+                            $subquery->select('progress')
+                                ->from('histories')
+                                ->whereColumn('histories.episode_id', 'episodes.id')
+                                ->where('histories.user_id', $userId)
+                                ->limit(1);
+                        }]);
+                }]);
+            } else {
+                $query = Movie::with('category')->withCount('episodes')->withCount('ratings');
+                $query->with(['episodes' => function ($q) {
+                    $q->orderBy('episode_number', 'asc');
+                }]);
+            }
 
             if (is_numeric($identifier)) {
                 $movie = $query->find($identifier);
@@ -115,14 +133,11 @@ class MovieController extends Controller
 
                 $package = $sub->package()->with('movies:id')->first();
 
-
                 if (!$package || !$package->movies->contains($movie->id)) {
                     return response()->json(['message' => 'This movie is not included in your current subscription package.'], 403); // Use 403 Forbidden
                 }
             } else {
-
                 $moviePackages = $movie->packages()->get();
-
 
                 $hasBasicPackage = $moviePackages->contains(function ($package) {
                     return strtolower($package->name) === 'basic';
@@ -243,24 +258,92 @@ class MovieController extends Controller
             }
             $episode = Episode::find($episodeId);
             if (!$episode) {
-                return response()->json(['message' => 'Không thấy movie'], 404);
+                return response()->json(['message' => 'Không thấy tập phim'], 404);
             }
             $progress = $request->has('progress') ? $request->input('progress') : 0;
             if ($progress < 0 || $progress > 100) {
                 return response()->json(['message' => 'Progress không hợp lệ'], 400);
             }
-            $episode->history()->updateOrCreate(
-                ['user_id' => $user->id],
-                ['progress' => $progress]
-            );
+
+            // Kiểm tra lịch sử đã tồn tại chưa
+            $history = History::where('user_id', $user->id)
+                ->where('episode_id', $episodeId)
+                ->first();
+
+            if ($history) {
+                // Cập nhật nếu đã có
+                $history->progress = $progress;
+                $history->last_watched_at = now();
+                $history->save();
+            } else {
+                // Tạo mới nếu chưa có
+                History::create([
+                    'user_id' => $user->id,
+                    'episode_id' => $episodeId,
+                    'progress' => $progress,
+                    'last_watched_at' => now()
+                ]);
+            }
+
+            return response()->json([
+                'message' => 'Cập nhật lịch sử xem phim thành công'
+            ], 200);
         } catch (\Throwable $th) {
             return response()->json(['error' => $th->getMessage(), 'message' => 'Có lỗi xảy ra'], 500);
         }
     }
 
+    public function updateHistory(Request $request, $episodeId)
+    {
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+            if (!$user) {
+                return response()->json(['message' => 'Xác thực user thất bại'], 401);
+            }
 
+            $episode = Episode::find($episodeId);
+            if (!$episode) {
+                return response()->json(['message' => 'Không tìm thấy tập phim'], 404);
+            }
 
+            $validatedData = $request->validate([
+                'progress' => 'required|integer|min:0|max:100',
+            ]);
 
+            // Kiểm tra xem đã có lịch sử xem hay chưa
+            $history = History::where('user_id', $user->id)
+                ->where('episode_id', $episodeId)
+                ->first();
+
+            if ($history) {
+                // Cập nhật lịch sử xem nếu đã tồn tại
+                $history->progress = $validatedData['progress'];
+                $history->last_watched_at = now();
+                $history->save();
+            } else {
+                // Tạo mới lịch sử xem nếu chưa tồn tại
+                $user->history()->create([
+                    'episode_id' => $episodeId,
+                    'progress' => $validatedData['progress'],
+                    'last_watched_at' => now()
+                ]);
+            }
+
+            return response()->json([
+                'message' => 'Cập nhật lịch sử xem phim thành công',
+                'history' => History::where('user_id', $user->id)
+                    ->where('episode_id', $episodeId)
+                    ->first()
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'message' => 'Có lỗi xảy ra khi cập nhật lịch sử xem phim'
+            ], 500);
+        }
+    }
 
     // Dung để test
     public function genRandomViews(Request $request, $type = 'create')

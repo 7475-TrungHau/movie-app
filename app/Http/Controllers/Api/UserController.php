@@ -248,7 +248,7 @@ class UserController extends Controller
             }
 
             $histories = $query
-                ->with(['episode:id,episode_number,title,thumbnail_url,movie_id', 'episode.movie:id,name,slug,thumbnail_url'])
+                ->with(['episode:id,episode_number,title,thumbnail_url,movie_id,slug', 'episode.movie:id,name,slug,thumbnail_url'])
                 ->orderBy('last_watched_at', 'desc')
                 ->paginate($perPage);
 
@@ -268,7 +268,7 @@ class UserController extends Controller
         }
     }
 
-    public function updateHistory(Request $request, $episodeId)
+    public function getHistories(Request $request)
     {
         try {
             $user = $request->attributes->get('author_user');
@@ -276,36 +276,23 @@ class UserController extends Controller
                 return response()->json(['message' => 'Xác thực user thất bại'], 401);
             }
 
-            $episode = Episode::find($episodeId);
-            if (!$episode) {
-                return response()->json(['message' => 'Không tìm thấy tập phim'], 404);
+            $histories = History::where('user_id', $user->id)
+                ->with(['episode:id,episode_number,title,thumbnail_url,movie_id', 'episode.movie:id,name,slug,thumbnail_url'])
+                ->orderBy('last_watched_at', 'desc')
+                ->get();
+
+            if ($histories->isEmpty()) {
+                return response()->json(['message' => 'Không tìm thấy lịch sử xem phim'], 404);
             }
 
-            $validatedData = $request->validate([
-                'progress' => 'required|integer|min:0|max:100',
-            ]);
-
-            $history = History::updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'episode_id' => $episodeId,
-                ],
-                [
-                    'progress' => $validatedData['progress'],
-                    'last_watched_at' => now(),
-                ]
-            );
-
             return response()->json([
-                'message' => 'Cập nhật lịch sử xem phim thành công',
-                'history' => $history
+                'histories' => $histories,
+                'message' => 'Lấy danh sách lịch sử xem phim thành công'
             ], 200);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'error' => $e->getMessage(),
-                'message' => 'Có lỗi xảy ra khi cập nhật lịch sử xem phim'
+                'message' => 'Có lỗi xảy ra khi lấy lịch sử xem phim'
             ], 500);
         }
     }

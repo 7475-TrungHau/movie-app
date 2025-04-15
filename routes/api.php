@@ -24,12 +24,13 @@ Route::middleware('auth.jwt')->group(function () {
 
     // History routes
     Route::get('/user/histories', [UserController::class, 'getHistory'])->name('user.histories');
-    Route::post('/user/histories/{episodeId}', [UserController::class, 'updateHistory'])->name('user.history.update');
+    // Route::get('/user/all-histories', [UserController::class, 'getHistories'])->name('user.all.histories');
     Route::delete('/user/histories/{episodeId?}', [UserController::class, 'deleteHistory'])->name('user.history.delete');
 
     // Movie   (đánh giá, lịch sử xem)
     Route::post('/movies/{movieId}/rating', [MovieController::class, 'Rating'])->name('movie.rating');
     Route::post('/movies/{movieId}/favorite', [MovieController::class, 'Favorite'])->name('movie.favorite');
+    Route::post('/movies/{episodeId}/histories', [MovieController::class, 'updateHistory'])->name('movie.history.update');
     Route::post('/episodes/{episodeId}/history', [MovieController::class, 'setHistory'])->name('episode.history');
     Route::get('/payment/vnpay/{package_id}', [PaymentController::class, 'createVnpayPayment'])->name('payment.vnpay');
 
