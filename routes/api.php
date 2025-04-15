@@ -25,7 +25,7 @@ Route::middleware('auth.jwt')->group(function () {
     // History routes
     Route::get('/user/histories', [UserController::class, 'getHistory'])->name('user.histories');
     // Route::get('/user/all-histories', [UserController::class, 'getHistories'])->name('user.all.histories');
-    Route::delete('/user/histories/{episodeId?}', [UserController::class, 'deleteHistory'])->name('user.history.delete');
+    // Route::delete('/user/histories/{episodeId?}', [UserController::class, 'deleteHistory'])->name('user.history.delete');
 
     // Movie   (đánh giá, lịch sử xem)
     Route::post('/movies/{movieId}/rating', [MovieController::class, 'Rating'])->name('movie.rating');

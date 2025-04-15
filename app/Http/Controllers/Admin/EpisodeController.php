@@ -28,7 +28,7 @@ class EpisodeController extends Controller
             $file = $request->file($file);
             $fileName = time() . '_' . $file->getClientOriginalName();
             $file->move(public_path($folder), $fileName);
-            return $folder . '/' . $fileName;
+            return '/' . $folder . '/' . $fileName;
         } else {
             if ($request->filled($url)) {
                 if ($existingUrl && file_exists(public_path($existingUrl))) {
