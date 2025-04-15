@@ -4,13 +4,13 @@ import { faAngleLeft, faAngleRight, faPlayCircle } from "@fortawesome/free-solid
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { BASE_IMAGE_URL } from "../../../constants";
 
-const EpisodeSlider = ({ episodes, title, number, id }) => {
-    const { slug: movieSlug, tap } = useParams(); // Lấy slug tập đang xem
+const EpisodeSlider = ({ episodes, title, number, id, showProgress = false }) => {
+    const { slug: movieSlug, tap } = useParams();
     const [currentSlide, setCurrentSlide] = useState(0);
-    const [hoveredEpisode, setHoveredEpisode] = useState(null); // Tập đang hover
+    const [hoveredEpisode, setHoveredEpisode] = useState(null);
     const itemsPerSlide = number ?? 5;
 
-    // Đảm bảo episodes luôn là một mảng
+
     const validEpisodes = Array.isArray(episodes) ? episodes : [];
     const totalItems = validEpisodes.length;
 
@@ -33,11 +33,21 @@ const EpisodeSlider = ({ episodes, title, number, id }) => {
         }
     }, [currentSlide, totalItems, id]);
 
+
+    useEffect(() => {
+        if (tap) {
+            const currentEpisodeIndex = validEpisodes.findIndex(ep => ep.slug === tap);
+            if (currentEpisodeIndex >= 0) {
+                // Calculate which slide should be shown to display the current episode
+                const slideIndex = Math.floor(currentEpisodeIndex / itemsPerSlide) * itemsPerSlide;
+                setCurrentSlide(slideIndex);
+            }
+        }
+    }, [tap, validEpisodes, itemsPerSlide]);
+
     if (validEpisodes.length === 0) {
         return <div className="text-white">Không có tập phim nào.</div>;
     }
-
-
 
     return (
         <div className="relative">
@@ -51,7 +61,7 @@ const EpisodeSlider = ({ episodes, title, number, id }) => {
                     style={{ width: `${(totalItems * 100) / itemsPerSlide}%` }}
                 >
                     {validEpisodes.map((episode, index) => {
-                        const isActive = episode.slug === tap; // Kiểm tra tập đang xem
+                        const isActive = episode.slug === tap;
 
                         return (
                             <Link
@@ -61,8 +71,8 @@ const EpisodeSlider = ({ episodes, title, number, id }) => {
                                     }`}
                                 style={{ width: `${100 / itemsPerSlide}%` }}
                                 title={episode.title}
-                                onMouseEnter={() => setHoveredEpisode(episode)} // Lưu tập đang hover
-                                onMouseLeave={() => setHoveredEpisode(null)} // Xóa tập đang hover
+                                onMouseEnter={() => setHoveredEpisode(episode)}
+                                onMouseLeave={() => setHoveredEpisode(null)}
                             >
                                 {isActive && (
                                     <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
@@ -91,6 +101,19 @@ const EpisodeSlider = ({ episodes, title, number, id }) => {
                                     >
                                         {episode.title || `Tập ${episode.episode_number}`}
                                     </p>
+
+                                    {/* Progress bar */}
+                                    {showProgress && episode.progress > 0 && (
+                                        <div className="mt-1 w-full bg-gray-600 rounded-full h-1.5">
+                                            <div
+                                                className="bg-blue-500 h-1.5 rounded-full"
+                                                style={{ width: `${episode.progress}%` }}
+                                            ></div>
+                                            <p className="text-xs text-gray-300 text-center mt-0.5">
+                                                {episode.progress === 100 ? 'Đã xem' : `${episode.progress}%`}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="w-full h-full flex items-center hover:opacity-50 justify-center absolute top-0 left-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                     <FontAwesomeIcon

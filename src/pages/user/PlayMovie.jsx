@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import CustomVideoPlayer from "@components/user/CustomVideoPlayer";
 import RatingDisplay from "@components/RatingDisplay";
 import { faCircle, faHeart, faShare, faEye } from '@fortawesome/free-solid-svg-icons';
@@ -7,16 +7,13 @@ import TruncatedText from "@components/common/TruncatedText";
 import FavoriteHeart from "@components/common/Button/FavoriteHeart";
 import Slider from "@components/user/Slider/Slider";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { getMovie, getMovies, postRateMovie, postFavoriteMovie } from "@/Services/apiService";
+import { getMovie, getMovies, postRateMovie, postFavoriteMovie, postHistoryMovie } from "@/Services/apiService";
 import { getUserProfileData } from "../../services/authService";
 import { extractCountryFromGenres } from "../../utils/stringUtils";
 import EpisodeSlider from "@components/user/Slider/EpisodeSlider";
 import { useToast } from "../../context/ToastContext";
 
 function PlayMovie() {
-    const text = "Selenium là một tập hợp các công cụ kiểm thử tự động mã nguồn mở và hoàn toàn miễn phí, được thiết kế để hỗ trợ việc kiểm tra các ứng dụng web trên nhiều trình duyệt và hệ điều hành khác nhau . Với khả năng tương thích với nhiều ngôn ngữ lập trình như Java, C#, và Python, Selenium mang đến sự linh hoạt cho các nhà phát triển và kiểm thử viên trong việc lựa chọn công cụ phù hợp với kỹ năng và yêu cầu của dự án kiểm thử.";
-    const movieSrc = "https://www.youtube.com/watch?v=kJ4jqq0AKZo";
-    const movieSrc2 = "https://player.phimapi.com/player/?url=https://s3.phim1280.tv/20240524/znnHM21Z/index.m3u8";
 
     const [movie, setMovie] = useState([]);
     const [episodes, setEpisodes] = useState([]);
@@ -27,16 +24,22 @@ function PlayMovie() {
     const [userRating, setUserRating] = useState(0);
     const [isFavorite, setIsFavorite] = useState(false);
     const [time, setTime] = useState(0);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [duration, setDuration] = useState(0);
     const [onLoad, setOnLoad] = useState(false);
     const { success, error: errorToast } = useToast();
     const navigate = useNavigate();
+    const historyTimerRef = useRef(null);
+    const currentTimeRef = useRef(0);
+    const durationRef = useRef(0);
+    const isAuthenticated = !!localStorage.getItem('token');
+    const initialLoadRef = useRef(true);
 
     const { slug, tap } = useParams();
 
     useEffect(() => {
         window.scrollTo(0, 0);
     }, [slug, tap]);
-
 
     useEffect(() => {
         const fetchMovie = async () => {
@@ -52,6 +55,16 @@ function PlayMovie() {
                 setEpisodes(res.data.episodes);
                 setInitialRating(res.data.rating);
                 setTotalRating(res.data.ratings_count);
+
+                // Auto-navigate to last watched episode if no specific episode is requested
+                if (!tap && isAuthenticated && initialLoadRef.current) {
+                    initialLoadRef.current = false;
+                    const lastWatchedEpisode = findLastWatchedEpisode(res.data.episodes);
+                    if (lastWatchedEpisode && lastWatchedEpisode.slug) {
+                        navigate(`/xem-phim/${slug}/${lastWatchedEpisode.slug}`, { replace: true });
+                        return;
+                    }
+                }
 
             } catch (error) {
                 console.log("Loi lay movie : " + error);
@@ -73,7 +86,36 @@ function PlayMovie() {
         }
         fetchMovie();
         fetchAnimeJapan();
+
+        // Clear any existing timer when component unmounts or when slug/tap changes
+        return () => {
+            if (historyTimerRef.current) {
+                clearInterval(historyTimerRef.current);
+            }
+        };
     }, [slug]);
+
+    // Helper function to find the last watched episode
+    const findLastWatchedEpisode = (episodes) => {
+        if (!episodes || episodes.length === 0) return null;
+
+        // First check for episodes with progress
+        const watchedEpisodes = episodes.filter(ep => ep.progress && ep.progress > 0);
+
+        if (watchedEpisodes.length === 0) return episodes[0]; // If no watched episodes, return first episode
+
+        // Sort by progress (incomplete episodes first)
+        const sortedEpisodes = [...watchedEpisodes].sort((a, b) => {
+            // If one episode is complete (100%) and the other isn't, prioritize the incomplete one
+            if (a.progress === 100 && b.progress < 100) return 1;
+            if (b.progress === 100 && a.progress < 100) return -1;
+
+            // Otherwise sort by episode number (descending)
+            return b.episode_number - a.episode_number;
+        });
+
+        return sortedEpisodes[0];
+    };
 
     useEffect(() => {
         const fetchUserRating = async () => {
@@ -111,6 +153,54 @@ function PlayMovie() {
         }
     }, [tap, movie, episodes]);
 
+    // Setup history tracking timer
+    useEffect(() => {
+        if (isAuthenticated && episode && episode.id) {
+            // Save initial watch history
+            saveWatchProgress();
+
+            // Set up interval to save progress every 30 seconds
+            historyTimerRef.current = setInterval(() => {
+                saveWatchProgress();
+            }, 30000); // 30 seconds
+        }
+
+        return () => {
+            if (historyTimerRef.current) {
+                clearInterval(historyTimerRef.current);
+            }
+        };
+    }, [episode, isAuthenticated]);
+
+    // Function to save watch progress
+    const saveWatchProgress = async () => {
+        if (!isAuthenticated || !episode || !episode.id) return;
+
+        try {
+            if (durationRef.current <= 0) {
+                console.log("Thời lượng chưa khả dụng, bỏ qua cập nhật lịch sử");
+                return;
+            }
+
+            const progress = Math.floor((currentTimeRef.current / durationRef.current) * 100);
+            console.log("Saving progress:", {
+                episode_id: episode.id,
+                progress: progress > 100 ? 100 : progress
+            });
+
+            const res = await postHistoryMovie(episode.id, {
+                progress: progress > 100 ? 100 : progress
+            });
+            console.log("Watch progress saved:", progress + "%");
+        } catch (error) {
+            console.error("Error saving watch history:", error);
+            if (error.response) {
+                console.error("Response data:", error.response.data);
+            }
+        }
+    };
+
+    // Rest of your component remains unchanged
     const handleRatingChange = async (newRating) => {
         if (newRating === initialRating) {
             return;
@@ -131,7 +221,6 @@ function PlayMovie() {
             errorToast(errorMessage, 3000);
             console.error("Error rating movie: ", error.response?.data || error.message);
         }
-
     };
 
     const handleFavorite = async () => {
@@ -158,9 +247,18 @@ function PlayMovie() {
 
     const getTimes = (time) => {
         setTime(time);
+        setDuration(time);
     }
 
-
+    // Handle video time updates
+    const handleTimeUpdate = (currentTime, totalDuration) => {
+        setCurrentTime(currentTime);
+        currentTimeRef.current = currentTime;
+        if (totalDuration && totalDuration > 0) {
+            setDuration(totalDuration);
+            durationRef.current = totalDuration;
+        }
+    };
 
     // Add 'name' field to each episode and create a new array
     const episodesWithName = episodes.map(ep => ({
@@ -172,7 +270,13 @@ function PlayMovie() {
         <div className="w-full border  mt-18" >
             <div className="w-full h-[610px] ">
 
-                <CustomVideoPlayer src={`${episode?.video_url}`} height={"610px"} getTimes={getTimes} />
+                <CustomVideoPlayer
+                    src={`${episode?.video_url}`}
+                    height={"610px"}
+                    getTimes={getTimes}
+                    onTimeUpdate={handleTimeUpdate}
+                    initialTime={episode?.progress ? (episode.progress / 100) * durationRef.current : 0}
+                />
             </div>
 
             <div className="w-full mt-10 flex justify-center items-center gap-20 space-x-10 text-sm text-[#d2d2d2]">
@@ -250,10 +354,11 @@ function PlayMovie() {
             <div className="container mx-auto my-10">
 
                 {movie?.type === "series" ? (<EpisodeSlider
-                    episodes={episodes}
+                    episodes={episodesWithName}
                     number={5}
                     title="Các tập phim"
                     id="episode-list-slider"
+                    showProgress={true}
                 />) : (
                     <div className="text-white text-center text-2xl font-bold">Phim này không có tập phim nào</div>
                 )}

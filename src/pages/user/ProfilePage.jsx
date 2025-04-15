@@ -15,7 +15,7 @@ import FavoritesTab from '@components/user/profile/FavoritesTab';
 import SettingsTab from '@components/user/profile/SettingsTab';
 
 // Import mock data for history (replace with API calls later)
-import { viewingHistory } from '@components/user/profile/mockData';
+
 
 function ProfilePage() {
     const [user, setUser] = useState(null);
@@ -36,8 +36,6 @@ function ProfilePage() {
 
     const { success, error, warning } = useToast();
     const navigate = useNavigate();
-
-    console.log("log favorites: ", favorites);
 
 
     useEffect(() => {
@@ -250,7 +248,7 @@ function ProfilePage() {
                             <SubscriptionTab user={user} />
                         )}
                         {activeTab === 'history' && (
-                            <HistoryTab viewingHistory={viewingHistory} />
+                            <HistoryTab />
                         )}
                         {activeTab === 'favorites' && (
                             <FavoritesTab

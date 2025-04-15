@@ -3,7 +3,7 @@ import ReactPlayer from 'react-player';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faVolumeMute, faVolumeUp, faVolumeDown, faGear } from '@fortawesome/free-solid-svg-icons';
 
-const CustomVideoPlayer = ({ src, heigh, getTimes }) => {
+const CustomVideoPlayer = ({ src, height, getTimes, onTimeUpdate, initialTime = 0 }) => {
     const playerRef = useRef(null);
     const [playing, setPlaying] = useState(false);
     const [played, setPlayed] = useState(0);
@@ -15,9 +15,39 @@ const CustomVideoPlayer = ({ src, heigh, getTimes }) => {
     const [showSettings, setShowSettings] = useState(false);
     const [loaded, setLoaded] = useState(0);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const initialTimeApplied = useRef(false);
+
+    // Effect to seek to initial time when video is loaded
+    useEffect(() => {
+        if (playerRef.current && initialTime > 0 && !initialTimeApplied.current && duration > 0) {
+            playerRef.current.seekTo(initialTime);
+            initialTimeApplied.current = true;
+            console.log('Seeking to initial time:', initialTime);
+        }
+    }, [initialTime, duration, playerRef.current]);
+
+    // Reset initialTimeApplied when src changes
+    useEffect(() => {
+        initialTimeApplied.current = false;
+    }, [src]);
 
     const handleProgress = (state) => {
-        if (!seeking) { setPlayed(state.played); }
+        if (!seeking) {
+            setPlayed(state.played);
+
+            // Update current time
+            if (playerRef.current) {
+                const currentTime = playerRef.current.getCurrentTime();
+                setCurrentTime(currentTime);
+
+                // Report time update to parent component
+                if (onTimeUpdate) {
+                    onTimeUpdate(currentTime, duration);
+                }
+            }
+        }
         setLoaded(state.loaded);
     };
 
@@ -56,12 +86,18 @@ const CustomVideoPlayer = ({ src, heigh, getTimes }) => {
 
     useEffect(() => {
         if (playerRef.current) {
-            const duration = playerRef.current.getDuration();
+            const videoDuration = playerRef.current.getDuration();
+            setDuration(videoDuration);
+
             if (getTimes) {
-                getTimes(duration);
+                getTimes(videoDuration);
+            }
+
+            if (onTimeUpdate) {
+                onTimeUpdate(currentTime, videoDuration);
             }
         }
-    }, [playerRef.current, getTimes]);
+    }, [playerRef.current, getTimes, onTimeUpdate]);
 
     useEffect(() => {
         const handleFullscreenChange = () => {
@@ -104,8 +140,9 @@ const CustomVideoPlayer = ({ src, heigh, getTimes }) => {
 
     if (!src) { return <div>No video source</div>; }
 
-    const currentTime = playerRef.current ? playerRef.current.getCurrentTime() : 0;
-    const duration = playerRef.current ? playerRef.current.getDuration() : 0;
+    // Remove these duplicate variable declarations
+    // const currentTime = playerRef.current ? playerRef.current.getCurrentTime() : 0;
+    // const duration = playerRef.current ? playerRef.current.getDuration() : 0;
 
     return (
         <div
