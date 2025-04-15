@@ -10,6 +10,7 @@ import Movies from "./pages/user/Movies";
 import MovieDetail from "./pages/user/MovieDetail";
 import Register from "./pages/user/Register";
 import Login from "./pages/user/Login";
+import GoogleCallback from "./pages/user/GoogleCallback";
 import "./App.css";
 import PaymentResult from "./components/user/payment/PaymentResult";
 import PlayMovie from "./pages/user/PlayMovie";
@@ -34,6 +35,7 @@ function App() {
             <Route path="/xem-phim/:slug/:tap?" element={<PlayMovie />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/auth/google/callback" element={<GoogleCallback />} />
             <Route path="/subscription" element={<SubscriptionPlans />} />
             <Route path="/payment-success" element={<PaymentResult />} />
             <Route path="/payment-failed" element={<PaymentResult />} />

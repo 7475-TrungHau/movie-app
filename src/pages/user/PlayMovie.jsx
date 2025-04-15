@@ -12,6 +12,7 @@ import { getUserProfileData } from "../../services/authService";
 import { extractCountryFromGenres } from "../../utils/stringUtils";
 import EpisodeSlider from "@components/user/Slider/EpisodeSlider";
 import { useToast } from "../../context/ToastContext";
+import { BASE_IMAGE_URL } from "../../constants";
 
 function PlayMovie() {
 
@@ -56,7 +57,7 @@ function PlayMovie() {
                 setInitialRating(res.data.rating);
                 setTotalRating(res.data.ratings_count);
 
-                // Auto-navigate to last watched episode if no specific episode is requested
+
                 if (!tap && isAuthenticated && initialLoadRef.current) {
                     initialLoadRef.current = false;
                     const lastWatchedEpisode = findLastWatchedEpisode(res.data.episodes);
@@ -270,8 +271,9 @@ function PlayMovie() {
         <div className="w-full border  mt-18" >
             <div className="w-full h-[610px] ">
 
+
                 <CustomVideoPlayer
-                    src={`${episode?.video_url}`}
+                    src={episode?.video_url ? (episode.video_url.startsWith('http') ? episode.video_url : BASE_IMAGE_URL + episode.video_url) : ''}
                     height={"610px"}
                     getTimes={getTimes}
                     onTimeUpdate={handleTimeUpdate}
@@ -311,7 +313,7 @@ function PlayMovie() {
                     <div className="py-2">
                         <TruncatedText text={movie?.description || "Không có thông tin mô tả"} maxLine={4} />
                     </div>
-                </div>
+                </div >
                 <div className="w-2/5 ">
                     <div className="flex items-center gap-10 mb-5">
                         <div className="flex items-center gap-2">
@@ -350,7 +352,7 @@ function PlayMovie() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div >
             <div className="container mx-auto my-10">
 
                 {movie?.type === "series" ? (<EpisodeSlider
@@ -367,11 +369,13 @@ function PlayMovie() {
             <div className="w-full h-1 bg-gray-500/50 mt-5"></div>
 
             <br />
-            {moviesSlider && (
-                <div className="container mx-auto mt-10 mb-15">
-                    <Slider data={moviesSlider} title={"Phim liên quan"} />
-                </div>
-            )}
+            {
+                moviesSlider && (
+                    <div className="container mx-auto mt-10 mb-15">
+                        <Slider data={moviesSlider} title={"Phim liên quan"} />
+                    </div>
+                )
+            }
 
         </div >
     )

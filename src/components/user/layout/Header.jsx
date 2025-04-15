@@ -182,7 +182,7 @@ function Header() {
                                     {userInfo && !userInfo.packages.includes("Basic") ? (
                                         <button type="button" className="text-white cursor-pointer bg-gradient-to-r from-green-500 via-green-700 to-green-400 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 font-bold text-md rounded-lg px-3 py-2 text-center mx-2">
                                             <FontAwesomeIcon icon={userInfo.package_name === "VIP" ? faStar : faCrown} className='mr-2' />
-                                            {userInfo.packages[0].name == "VIP" ? "VIP" : "PRO"}
+                                            {userInfo.packages[0]?.name == "VIP" ? "VIP" : "PRO"}
                                         </button>
                                     ) : (
                                         <button type="button" className="text-white cursor-pointer bg-gradient-to-r from-orange-500 via-orange-700 to-orange-400 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-orange-300 dark:focus:ring-orange-800 font-bold text-md rounded-lg px-3 py-2 text-center mx-2">
